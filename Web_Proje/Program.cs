@@ -1,7 +1,15 @@
+using Microsoft.AspNetCore.Identity;
+using Web_Proje.Models;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<GymContext>();
+builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = false)
+    .AddRoles<IdentityRole<int>>()
+    .AddEntityFrameworkStores<GymContext>();
+
 
 var app = builder.Build();
 
