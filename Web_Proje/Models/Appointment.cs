@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Web_Proje.Models
 {
@@ -9,6 +10,10 @@ namespace Web_Proje.Models
         [Required]
         public int UserId { get; set; }
         public User? User { get; set; } //ORM için otomatik ilişki sağlandı ve LINQ işlemleri kolaylaştı
+
+        [Display(Name = "Salon")]
+        public int GymId { get; set; }
+        public Gym? Gym { get; set; }
 
         [Required]
         public int TrainerId { get; set; }

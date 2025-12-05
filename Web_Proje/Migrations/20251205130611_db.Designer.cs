@@ -12,8 +12,8 @@ using Web_Proje.Models;
 namespace Web_Proje.Migrations
 {
     [DbContext(typeof(GymContext))]
-    [Migration("20251126204957_ilk")]
-    partial class ilk
+    [Migration("20251205130611_db")]
+    partial class db
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -169,6 +169,9 @@ namespace Web_Proje.Migrations
                     b.Property<DateTime>("AppointmentDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("GymId")
+                        .HasColumnType("int");
+
                     b.Property<int>("ServiceId")
                         .HasColumnType("int");
 
@@ -182,6 +185,8 @@ namespace Web_Proje.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GymId");
 
                     b.HasIndex("ServiceId");
 
@@ -255,7 +260,7 @@ namespace Web_Proje.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("GymId")
+                    b.Property<int>("GymId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -400,6 +405,12 @@ namespace Web_Proje.Migrations
 
             modelBuilder.Entity("Web_Proje.Models.Appointment", b =>
                 {
+                    b.HasOne("Web_Proje.Models.Gym", "Gym")
+                        .WithMany()
+                        .HasForeignKey("GymId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Web_Proje.Models.Services", "Service")
                         .WithMany("Appointments")
                         .HasForeignKey("ServiceId")
@@ -418,6 +429,8 @@ namespace Web_Proje.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Gym");
+
                     b.Navigation("Service");
 
                     b.Navigation("Trainer");
@@ -434,9 +447,13 @@ namespace Web_Proje.Migrations
 
             modelBuilder.Entity("Web_Proje.Models.Trainer", b =>
                 {
-                    b.HasOne("Web_Proje.Models.Gym", null)
+                    b.HasOne("Web_Proje.Models.Gym", "Gym")
                         .WithMany("Trainers")
-                        .HasForeignKey("GymId");
+                        .HasForeignKey("GymId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Gym");
                 });
 
             modelBuilder.Entity("Web_Proje.Models.Gym", b =>

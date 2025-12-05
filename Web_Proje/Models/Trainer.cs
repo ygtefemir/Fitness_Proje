@@ -9,9 +9,13 @@ namespace Web_Proje.Models
         [Display(Name = "Ad Soyad")]
 
         public string Name { get; set; }
+
+        [Display(Name = "Salon")]
+        public int GymId { get; set; }
+        public Gym? Gym { get; set; }
+
         [Required(ErrorMessage = "Uzmanlık alanı zorunludur.")]
         [Display(Name = "Uzmanlık Alanı")]
-
         public string Specialty { get; set; }
 
         [Required]

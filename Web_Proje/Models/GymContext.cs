@@ -20,5 +20,15 @@ namespace Web_Proje.Models
             opt.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=GymSystemDB;Trusted_Connection=True;MultipleActiveResultSets=true");
 
         }
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+            builder.Entity<Trainer>()
+                .HasOne(t => t.Gym)
+                .WithMany(g => g.Trainers)
+                .HasForeignKey(t => t.GymId)
+                .OnDelete(DeleteBehavior.Cascade); //Cascade silme hatası düzeltildi
+        }
     }
 }
