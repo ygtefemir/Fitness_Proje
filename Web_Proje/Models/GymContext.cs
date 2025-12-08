@@ -15,6 +15,8 @@ namespace Web_Proje.Models
 
         public DbSet<Appointment> Appointments { get; set; }
 
+        public DbSet<TrainerService> TrainerService { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder opt)
         {
             opt.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=GymSystemDB;Trusted_Connection=True;MultipleActiveResultSets=true");
@@ -23,6 +25,19 @@ namespace Web_Proje.Models
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
+
+            builder.Entity<TrainerService>()
+        .HasKey(ts => new { ts.TrainerId, ts.ServiceId }); // composite key
+
+            builder.Entity<TrainerService>()
+                .HasOne(ts => ts.trainer)
+                .WithMany(t => t.TrainerServices)
+                .HasForeignKey(ts => ts.TrainerId);
+
+            builder.Entity<TrainerService>()
+                .HasOne(ts => ts.service)
+                .WithMany(s => s.TrainerServices)
+                .HasForeignKey(ts => ts.ServiceId);
             base.OnModelCreating(builder);
             builder.Entity<Trainer>()
                 .HasOne(t => t.Gym)

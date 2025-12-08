@@ -12,8 +12,8 @@ using Web_Proje.Models;
 namespace Web_Proje.Migrations
 {
     [DbContext(typeof(GymContext))]
-    [Migration("20251205130611_db")]
-    partial class db
+    [Migration("20251207215438_dbb")]
+    partial class dbb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -209,8 +209,8 @@ namespace Web_Proje.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ClosingHour")
-                        .HasColumnType("int");
+                    b.Property<TimeSpan>("ClosingTime")
+                        .HasColumnType("time");
 
                     b.Property<string>("Name")
                         .IsRequired()

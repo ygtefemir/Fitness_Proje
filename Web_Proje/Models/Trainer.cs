@@ -18,6 +18,8 @@ namespace Web_Proje.Models
         [Display(Name = "Uzmanlık Alanı")]
         public string Specialty { get; set; }
 
+        public ICollection<TrainerService> TrainerServices { get; set; }
+
         [Required]
         [DataType(DataType.Time)]
         [Display(Name = "Mesai Başlangıç")]

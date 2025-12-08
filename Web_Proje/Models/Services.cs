@@ -18,6 +18,8 @@ namespace Web_Proje.Models
         [Column(TypeName = "decimal(18,2)")] // Para birimi formatı
         public decimal Price { get; set; }
 
+        public ICollection<TrainerService> TrainerServices { get; set; }
+
         public ICollection<Appointment>? Appointments { get; set; }
     }
 }

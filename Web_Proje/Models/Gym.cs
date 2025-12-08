@@ -23,7 +23,7 @@ namespace Web_Proje.Models
         [DataType(DataType.Time)]
         [Display(Name = "Kapanış Saati")]
         [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:hh\\:mm}")]
-        public int ClosingHour { get; set; } 
+        public TimeSpan ClosingTime { get; set; } 
 
         public ICollection<Trainer>? Trainers { get; set; }
         public ICollection<Services>? Services { get; set; }

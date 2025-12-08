@@ -95,6 +95,8 @@ namespace Web_Proje.Controllers
             return View(appointment);
 
         }
+        
+
 
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Approve(int id)

@@ -22,7 +22,7 @@
                 @Html.DisplayNameFor(model => model.OpeningHour)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.ClosingHour)
+                @Html.DisplayNameFor(model => model.ClosingTime)
             </th>
             <th></th>
         </tr>
@@ -40,7 +40,7 @@
                 @Html.DisplayFor(modelItem => item.OpeningHour)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.ClosingHour)
+                @Html.DisplayFor(modelItem => item.ClosingTime)
             </td>
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
