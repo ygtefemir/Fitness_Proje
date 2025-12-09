@@ -11,6 +11,23 @@
         <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
             <h2>Yeni Hesap Oluştur</h2>
             <hr />
+            <div class="form-floating mb-3">
+                <input asp-for="Input.FirstName" class="form-control" placeholder="Adınız" />
+                <label asp-for="Input.FirstName">Ad</label>
+                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.LastName" class="form-control" placeholder="Soyadınız" />
+                <label asp-for="Input.LastName">Soyad</label>
+                <span asp-validation-for="Input.LastName" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Telefon (5XX...)" />
+                <label asp-for="Input.PhoneNumber">Telefon Numarası</label>
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+            </div>
             <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
             <div class="form-floating mb-3">
                 <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="isim@ornek.com" />

@@ -75,10 +75,20 @@ namespace Web_Proje.Areas.Identity.Pages.Account
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
+            /// 
+            [Required]
+            [Display(Name = "Ad")]
+            public string FirstName { get; set; }
+
+            [Required]
+            [Display(Name = "Soyad")]
+            public string LastName { get; set; }
+
             [Required(ErrorMessage = "{0} alanı zorunludur")]
             [EmailAddress(ErrorMessage = "{0} alanı doğru formatta değil.")]
             [Display(Name = "E-Posta")]
             public string Email { get; set; }
+
 
             /// <summary>
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -98,6 +108,11 @@ namespace Web_Proje.Areas.Identity.Pages.Account
             [Display(Name = "Şifreyi Doğrula")]
             [Compare("Password", ErrorMessage = "Şifreler uyuşmuyor.")]
             public string ConfirmPassword { get; set; }
+
+            [Required]
+            [Phone]
+            [Display(Name = "Telefon Numarası")]
+            public string PhoneNumber { get; set; }
         }
 
 
@@ -114,6 +129,9 @@ namespace Web_Proje.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 var user = CreateUser();
+                user.FirstName = Input.FirstName;
+                user.LastName = Input.LastName;
+                user.PhoneNumber = Input.PhoneNumber;
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);

@@ -5,7 +5,7 @@
 namespace Web_Proje.Migrations
 {
     /// <inheritdoc />
-    public partial class Name : Migration
+    public partial class updt : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

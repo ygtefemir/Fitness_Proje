@@ -12,8 +12,8 @@ using Web_Proje.Models;
 namespace Web_Proje.Migrations
 {
     [DbContext(typeof(GymContext))]
-    [Migration("20251207215438_dbb")]
-    partial class dbb
+    [Migration("20251209202715_updt")]
+    partial class updt
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -284,6 +284,21 @@ namespace Web_Proje.Migrations
                     b.ToTable("Trainers");
                 });
 
+            modelBuilder.Entity("Web_Proje.Models.TrainerService", b =>
+                {
+                    b.Property<int>("TrainerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ServiceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("TrainerId", "ServiceId");
+
+                    b.HasIndex("ServiceId");
+
+                    b.ToTable("TrainerService");
+                });
+
             modelBuilder.Entity("Web_Proje.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -305,6 +320,14 @@ namespace Web_Proje.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -456,6 +479,25 @@ namespace Web_Proje.Migrations
                     b.Navigation("Gym");
                 });
 
+            modelBuilder.Entity("Web_Proje.Models.TrainerService", b =>
+                {
+                    b.HasOne("Web_Proje.Models.Services", "service")
+                        .WithMany("TrainerServices")
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Web_Proje.Models.Trainer", "trainer")
+                        .WithMany("TrainerServices")
+                        .HasForeignKey("TrainerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("service");
+
+                    b.Navigation("trainer");
+                });
+
             modelBuilder.Entity("Web_Proje.Models.Gym", b =>
                 {
                     b.Navigation("Services");
@@ -466,11 +508,15 @@ namespace Web_Proje.Migrations
             modelBuilder.Entity("Web_Proje.Models.Services", b =>
                 {
                     b.Navigation("Appointments");
+
+                    b.Navigation("TrainerServices");
                 });
 
             modelBuilder.Entity("Web_Proje.Models.Trainer", b =>
                 {
                     b.Navigation("Appointments");
+
+                    b.Navigation("TrainerServices");
                 });
 #pragma warning restore 612, 618
         }
