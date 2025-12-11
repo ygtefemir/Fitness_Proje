@@ -44,25 +44,31 @@ namespace Web_Proje.Controllers
 
             
             int durationNeeded = requestedService.DurationMin + breakTime;
-
             
+            bool isToday = selectedDate.Date == DateTime.Today;
+            TimeSpan nowTime = DateTime.Now.TimeOfDay;
+
+
             while (currentSlot.Add(TimeSpan.FromMinutes(durationNeeded)) <= trainer.ShiftEnd)
             {
                 TimeSpan startCandidate = currentSlot;
                 TimeSpan endCandidate = currentSlot.Add(TimeSpan.FromMinutes(durationNeeded));
 
-                bool isTaken = existingAppointments.Any(existingApp =>
+                
+                bool isTakenDb = existingAppointments.Any(existingApp =>
                 {
                     var existingStart = existingApp.AppointmentDate.TimeOfDay;
                     var existingEnd = existingStart.Add(TimeSpan.FromMinutes(existingApp.Service.DurationMin + breakTime));
-
                     return (startCandidate < existingEnd) && (endCandidate > existingStart);
                 });
+
+                
+                bool isPast = isToday && (startCandidate < nowTime);
 
                 availableSlots.Add(new
                 {
                     time = currentSlot.ToString(@"hh\:mm"),
-                    isAvailable = !isTaken
+                    isAvailable = !isTakenDb && !isPast
                 });
 
                 currentSlot = currentSlot.Add(TimeSpan.FromMinutes(15));

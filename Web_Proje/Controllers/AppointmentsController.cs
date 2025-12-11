@@ -57,6 +57,30 @@ namespace Web_Proje.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Cancel(int id)
+        {
+            var appointment = await _context.Appointments.FindAsync(id);
+
+            if (appointment == null)
+            {
+                return NotFound();
+            }
+
+            var user = await _userManager.GetUserAsync(User);
+
+            if (!User.IsInRole("Admin") && appointment.UserId != user.Id)
+            {
+                return Unauthorized();
+            }
+
+            _context.Appointments.Remove(appointment);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Appointment appointment) {
             var user = await _userManager.GetUserAsync(User);
             appointment.UserId = user.Id;

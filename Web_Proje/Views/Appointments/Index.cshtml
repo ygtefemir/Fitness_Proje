@@ -61,8 +61,20 @@
                         <a asp-action="Approve" asp-route-id="@item.Id">Onayla</a>
                         <div>|</div>
                         <a asp-action="Deny" asp-route-id="@item.Id">Reddet</a>
+                        }
+                    }else if(!User.IsInRole("Admin") && item.AppointmentDate > DateTime.Now)
+                    {
+                        <form asp-action="Cancel" asp-route-id="@item.Id" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Randevuyu iptal etmek istediğinize emin misiniz?');">
+                                 İptal Et
+                            </button>
+                        </form>
                     }
-                }
+                    else if (!User.IsInRole("Admin"))
+                    {
+                        <span class="text-muted small">Tamamlandı</span>
+                    }
             </td>
         </tr>
 }
