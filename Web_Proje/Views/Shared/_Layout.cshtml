@@ -45,6 +45,29 @@
                                 </ul>
                             </li>
                         }
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    🛡️ Yönetim Paneli
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Gyms" asp-action="Index">Salonlar</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Services" asp-action="Index">Hizmetler / Dersler</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Trainers" asp-action="Index">Antrenörler</a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Appointments" asp-action="Index">Tüm Randevular</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>

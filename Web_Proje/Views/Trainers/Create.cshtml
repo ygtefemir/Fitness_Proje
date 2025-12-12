@@ -1,4 +1,4 @@
-﻿@model Web_Proje.Models.Trainer
+﻿@model Web_Proje.Models.ViewModels.TrainerViewModel
 
 @{
     ViewData["Title"] = "Create";
@@ -22,6 +22,15 @@
                 <input asp-for="Specialty" class="form-control" />
                 <span asp-validation-for="Specialty" class="text-danger"></span>
             </div>
+            <div class="form-group mb-3">
+                <label asp-for="GymId" class="control-label fw-bold">Çalıştığı Salon</label>
+
+                <select asp-for="GymId" class="form-control form-select" asp-items="ViewBag.GymId">
+                    <option value="">-- Bir Spor Salonu Seçin --</option>
+                </select>
+
+                <span asp-validation-for="GymId" class="text-danger"></span>
+            </div>
             <div class="form-group">
                 <label asp-for="ShiftStart" class="control-label"></label>
                 <input asp-for="ShiftStart" class="form-control" />
@@ -32,6 +41,25 @@
                 <input asp-for="ShiftEnd" class="form-control" />
                 <span asp-validation-for="ShiftEnd" class="text-danger"></span>
             </div>
+            <div class="card mb-3">
+                <div class="card-header bg-light fw-bold">
+                    Hizmetler
+                </div>
+                <div class="card-body">
+                    @for (int i = 0; i < Model.Services.Count; i++)
+                    {
+                        <div class="">
+                            <div class="form-check">
+                                <input asp-for="Services[@i].ServiceId" class="form-check-input" />
+                                <input type="hidden" asp-for="Services[@i].ServiceName" />
+                                <input class="form-check" asp-for="@Model.Services[@i].Assigned" />"
+                                <label class="form-check-label" asp-for="@Model.Services[@i].Assigned">
+                                    @Model.Services[i].ServiceName
+                                </label>
+                            </div>
+                        </div>
+                    }
+                </div>
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div>

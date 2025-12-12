@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Web_Proje.Models;
+using Web_Proje.Models.ViewModels;
 
 namespace Web_Proje.Controllers
 {
+    [Authorize(Roles="Admin")]
     public class TrainersController : Controller
     {
         private readonly GymContext _context;
@@ -45,7 +48,19 @@ namespace Web_Proje.Controllers
         // GET: Trainers/Create
         public IActionResult Create()
         {
-            return View();
+            var allServices = _context.Services.ToList();
+            var ViewModel = new TrainerViewModel
+            {
+                Services = allServices.Select(s => new TrainerViewModel.AssignedServiceData
+                {
+                    ServiceId = s.Id,
+                    ServiceName = s.Name,
+                    Assigned = false
+                }).ToList()
+            };
+
+            ViewData["GymId"] = new SelectList(_context.Gyms, "Id", "Name");
+            return View(ViewModel);
         }
 
         // POST: Trainers/Create
@@ -53,15 +68,37 @@ namespace Web_Proje.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,Specialty,ShiftStart,ShiftEnd")] Trainer trainer)
+        public async Task<IActionResult> Create(TrainerViewModel ViewModel)
         {
+            var trainer = new Trainer
+            {
+                Name = ViewModel.Name,
+                Specialty = ViewModel.Specialty,
+                ShiftStart = ViewModel.ShiftStart,
+                ShiftEnd = ViewModel.ShiftEnd,
+                GymId = ViewModel.GymId,
+                TrainerServices = new List<TrainerService>()
+            };  
+
+            foreach (var service in ViewModel.Services)
+            {
+                if (service.Assigned)
+                {
+                    trainer.TrainerServices.Add(new TrainerService
+                    {
+                        ServiceId = service.ServiceId
+                    });
+                }
+            }
+
+
             if (ModelState.IsValid)
             {
                 _context.Add(trainer);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(trainer);
+            return View(ViewModel);
         }
 
         // GET: Trainers/Edit/5
@@ -72,47 +109,100 @@ namespace Web_Proje.Controllers
                 return NotFound();
             }
 
-            var trainer = await _context.Trainers.FindAsync(id);
+            var trainer = await _context.Trainers
+                .Include(t => t.TrainerServices)
+                .FirstOrDefaultAsync(t => t.Id == id);
             if (trainer == null)
             {
                 return NotFound();
             }
-            return View(trainer);
+
+            var allServices = await _context.Services.ToListAsync(); //tüm hizmetleri al
+            var trainerServiceIds = trainer.TrainerServices.Select(ts => ts.ServiceId).ToHashSet();
+            var ViewModel = new TrainerViewModel
+            {
+                Id = trainer.Id,
+                Name = trainer.Name,
+                Specialty = trainer.Specialty,
+                ShiftStart = trainer.ShiftStart,
+                ShiftEnd = trainer.ShiftEnd,
+                Services = new List<TrainerViewModel.AssignedServiceData>()
+            };
+
+            foreach (var service in allServices)
+            {
+                ViewModel.Services.Add(new TrainerViewModel.AssignedServiceData
+                {
+                    ServiceId = service.Id,
+                    ServiceName = service.Name,
+                    Assigned = trainerServiceIds.Contains(service.Id)
+                });
+            }
+            ViewData["GymId"] = new SelectList(_context.Gyms, "Id", "Name", trainer.GymId);
+
+            return View(ViewModel);
         }
+        
 
         // POST: Trainers/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Specialty,ShiftStart,ShiftEnd")] Trainer trainer)
+        public async Task<IActionResult> Edit(int id, TrainerViewModel ViewModel)
         {
-            if (id != trainer.Id)
+            if (id != ViewModel.Id)
             {
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            var TrainerToUpdate = await _context.Trainers
+                .Include(t => t.TrainerServices)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (TrainerToUpdate == null) return NotFound();
+
+            TrainerToUpdate.Name = ViewModel.Name;
+            TrainerToUpdate.Specialty = ViewModel.Specialty;
+            TrainerToUpdate.ShiftStart = ViewModel.ShiftStart;    
+            TrainerToUpdate.ShiftEnd = ViewModel.ShiftEnd;
+            TrainerToUpdate.GymId = ViewModel.GymId;
+            
+            var currentServices = TrainerToUpdate.TrainerServices.ToList();
+
+            _context.TrainerService.RemoveRange(currentServices);
+
+            foreach(var service in ViewModel.Services)
             {
-                try
+                if (service.Assigned)
                 {
-                    _context.Update(trainer);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!TrainerExists(trainer.Id))
+                    _context.TrainerService.Add(new TrainerService
                     {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                        TrainerId = TrainerToUpdate.Id,
+                        ServiceId = service.ServiceId
+                    });
                 }
-                return RedirectToAction(nameof(Index));
             }
-            return View(trainer);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!TrainerExists(ViewModel.Id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return View(ViewModel);
+
+
         }
 
         // GET: Trainers/Delete/5
