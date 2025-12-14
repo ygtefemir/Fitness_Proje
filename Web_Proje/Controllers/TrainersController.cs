@@ -68,141 +68,148 @@ namespace Web_Proje.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(TrainerViewModel ViewModel)
+        public async Task<IActionResult> Create(TrainerViewModel ViewModel, int[] selectedServices)
         {
-            var trainer = new Trainer
-            {
-                Name = ViewModel.Name,
-                Specialty = ViewModel.Specialty,
-                ShiftStart = ViewModel.ShiftStart,
-                ShiftEnd = ViewModel.ShiftEnd,
-                GymId = ViewModel.GymId,
-                TrainerServices = new List<TrainerService>()
-            };  
-
-            foreach (var service in ViewModel.Services)
-            {
-                if (service.Assigned)
-                {
-                    trainer.TrainerServices.Add(new TrainerService
-                    {
-                        ServiceId = service.ServiceId
-                    });
-                }
-            }
-
-
             if (ModelState.IsValid)
             {
+                // Trainer Nesnesini Oluştur
+                var trainer = new Trainer
+                {
+                    Name = ViewModel.Name,
+                    Specialty = ViewModel.Specialty,
+                    ShiftStart = ViewModel.ShiftStart,
+                    ShiftEnd = ViewModel.ShiftEnd,
+                    GymId = ViewModel.GymId,
+                    // Listeyi başlatıyoruz
+                    TrainerServices = new List<TrainerService>()
+                };
+
+                //Seçilen Checkbox'ları (ID'leri) Dönüp Ekliyoruz
+                if (selectedServices != null)
+                {
+                    foreach (var serviceId in selectedServices)
+                    {
+                        trainer.TrainerServices.Add(new TrainerService
+                        {
+                            ServiceId = serviceId
+                        });
+                    }
+                }
+
+                //aydet
                 _context.Add(trainer);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
+            // Hata varsa sayfayı tekrar doldurup gönder
+            
+            ViewModel.Services = _context.Services.Select(s => new TrainerViewModel.AssignedServiceData
+            {
+                ServiceId = s.Id,
+                ServiceName = s.Name,
+                Assigned = false
+            }).ToList();
+
+            ViewData["GymId"] = new SelectList(_context.Gyms, "Id", "Name", ViewModel.GymId);
             return View(ViewModel);
         }
 
-        // GET: Trainers/Edit/5
+
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
+            // Antrenörü ve ilişkili derslerini çek
             var trainer = await _context.Trainers
                 .Include(t => t.TrainerServices)
-                .FirstOrDefaultAsync(t => t.Id == id);
-            if (trainer == null)
-            {
-                return NotFound();
-            }
+                .FirstOrDefaultAsync(m => m.Id == id);
 
-            var allServices = await _context.Services.ToListAsync(); //tüm hizmetleri al
-            var trainerServiceIds = trainer.TrainerServices.Select(ts => ts.ServiceId).ToHashSet();
-            var ViewModel = new TrainerViewModel
+            if (trainer == null) return NotFound();
+
+            // derslerinin ID'lerini bir listeye al (Hızlı kontrol için HashSet)
+            var currentServiceIds = trainer.TrainerServices.Select(ts => ts.ServiceId).ToHashSet();
+
+            //Entity'i ViewModel'e çevir
+            var viewModel = new TrainerViewModel
             {
                 Id = trainer.Id,
                 Name = trainer.Name,
                 Specialty = trainer.Specialty,
                 ShiftStart = trainer.ShiftStart,
                 ShiftEnd = trainer.ShiftEnd,
-                Services = new List<TrainerViewModel.AssignedServiceData>()
+                GymId = trainer.GymId,
+                // Checkbox listesini hazırlıyoruz
+                Services = _context.Services.Select(s => new TrainerViewModel.AssignedServiceData
+                {
+                    ServiceId = s.Id,
+                    ServiceName = s.Name,
+                    // sahipse 'Assigned' true olsun (Kutu işaretli gelsin)
+                    Assigned = currentServiceIds.Contains(s.Id)
+                }).ToList()
             };
 
-            foreach (var service in allServices)
-            {
-                ViewModel.Services.Add(new TrainerViewModel.AssignedServiceData
-                {
-                    ServiceId = service.Id,
-                    ServiceName = service.Name,
-                    Assigned = trainerServiceIds.Contains(service.Id)
-                });
-            }
             ViewData["GymId"] = new SelectList(_context.Gyms, "Id", "Name", trainer.GymId);
-
-            return View(ViewModel);
+            return View(viewModel);
         }
-        
+
 
         // POST: Trainers/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, TrainerViewModel ViewModel)
+        public async Task<IActionResult> Edit(int id, TrainerViewModel viewModel, int[] selectedServices)
         {
-            if (id != ViewModel.Id)
+            if (id != viewModel.Id) return NotFound();
+
+            if (ModelState.IsValid)
             {
-                return NotFound();
-            }
-
-            var TrainerToUpdate = await _context.Trainers
-                .Include(t => t.TrainerServices)
-                .FirstOrDefaultAsync(t => t.Id == id);
-
-            if (TrainerToUpdate == null) return NotFound();
-
-            TrainerToUpdate.Name = ViewModel.Name;
-            TrainerToUpdate.Specialty = ViewModel.Specialty;
-            TrainerToUpdate.ShiftStart = ViewModel.ShiftStart;    
-            TrainerToUpdate.ShiftEnd = ViewModel.ShiftEnd;
-            TrainerToUpdate.GymId = ViewModel.GymId;
-            
-            var currentServices = TrainerToUpdate.TrainerServices.ToList();
-
-            _context.TrainerService.RemoveRange(currentServices);
-
-            foreach(var service in ViewModel.Services)
-            {
-                if (service.Assigned)
+                try
                 {
-                    _context.TrainerService.Add(new TrainerService
+                    //hocayı çek
+                    var trainerToUpdate = await _context.Trainers
+                        .Include(t => t.TrainerServices)
+                        .FirstOrDefaultAsync(t => t.Id == id);
+
+                    if (trainerToUpdate == null) return NotFound();
+
+                    //normal bilgileri güncelle
+                    trainerToUpdate.Name = viewModel.Name;
+                    trainerToUpdate.Specialty = viewModel.Specialty;
+                    trainerToUpdate.ShiftStart = viewModel.ShiftStart;
+                    trainerToUpdate.ShiftEnd = viewModel.ShiftEnd;
+                    trainerToUpdate.GymId = viewModel.GymId;
+
+                    // (Veritabanındaki mevcut listeyi siliyoruz)
+                    trainerToUpdate.TrainerServices.Clear();
+
+                    //yeni seçilenleri ekle
+                    if (selectedServices != null)
                     {
-                        TrainerId = TrainerToUpdate.Id,
-                        ServiceId = service.ServiceId
-                    });
-                }
-            }
+                        foreach (var serviceId in selectedServices)
+                        {
+                            trainerToUpdate.TrainerServices.Add(new TrainerService
+                            {
+                                ServiceId = serviceId,
+                                TrainerId = id
+                            });
+                        }
+                    }
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TrainerExists(ViewModel.Id))
+                    // Kaydet
+                    _context.Update(trainerToUpdate);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
                 {
-                    return NotFound();
+                    if (!TrainerExists(viewModel.Id)) return NotFound();
+                    else throw;
                 }
-                else
-                {
-                    throw;
-                }
+                return RedirectToAction(nameof(Index));
             }
 
-            return View(ViewModel);
-
-
+            return View(viewModel);
         }
 
         // GET: Trainers/Delete/5

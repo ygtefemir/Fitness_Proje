@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Web_Proje.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,6 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+//Ai servisi ekleniyor.
+builder.Services.AddScoped<Web_Proje.Services.AiService>();
 builder.Services.AddRazorPages();
 builder.Services.AddDbContext<GymContext>();
 builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = false)

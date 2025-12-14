@@ -1,0 +1,183 @@
+﻿<style>
+    /* Chat Butonu (Yuvarlak) */
+    #chat-circle {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: #0d6efd; /* Bootstrap Primary Rengi */
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        color: white;
+        padding: 15px;
+        cursor: pointer;
+        box-shadow: 0px 3px 10px rgba(0,0,0,0.2);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s;
+    }
+
+        #chat-circle:hover {
+            transform: scale(1.1);
+        }
+
+    /* Chat Penceresi (Kutu) */
+    .chat-box {
+        display: none; /* Başlangıçta gizli */
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        width: 350px;
+        max-width: 90%;
+        height: 450px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0px 5px 20px rgba(0,0,0,0.2);
+        z-index: 9999;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid #ddd;
+    }
+
+    /* Başlık Kısmı */
+    .chat-box-header {
+        background: #0d6efd;
+        color: white;
+        padding: 15px;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Mesajlaşma Alanı */
+    .chat-box-body {
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+        background: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* Mesaj Baloncukları */
+    .chat-msg {
+        padding: 10px 15px;
+        border-radius: 15px;
+        max-width: 80%;
+        font-size: 0.9rem;
+    }
+
+    .chat-msg-user {
+        background: #0d6efd;
+        color: white;
+        align-self: flex-end; /* Sağa yasla */
+        border-bottom-right-radius: 2px;
+    }
+
+    .chat-msg-ai {
+        background: #e9ecef;
+        color: #333;
+        align-self: flex-start; /* Sola yasla */
+        border-bottom-left-radius: 2px;
+    }
+
+    /* Giriş Alanı */
+    .chat-box-footer {
+        padding: 10px;
+        background: white;
+        border-top: 1px solid #ddd;
+        display: flex;
+        gap: 5px;
+    }
+</style>
+
+<div id="chat-circle" onclick="toggleChat()">
+    <i class="bi bi-chat-dots-fill" style="font-size: 2rem;"></i>
+</div>
+
+<div class="chat-box" id="chat-box">
+    <div class="chat-box-header">
+        <span>FitLife Asistan 🤖</span>
+        <span style="cursor:pointer;" onclick="toggleChat()">✖</span>
+    </div>
+
+    <div class="chat-box-body" id="chat-logs">
+        <div class="chat-msg chat-msg-ai">
+            Merhaba! Ben FitLife yapay zeka asistanı. Sana nasıl yardımcı olabilirim? 💪
+        </div>
+    </div>
+
+    <div class="chat-box-footer">
+        <input type="text" id="chat-input" class="form-control" placeholder="Bir soru sor..." onkeypress="handleEnter(event)">
+        <button class="btn btn-primary" onclick="sendMessage()"><i class="bi bi-send"></i></button>
+    </div>
+</div>
+
+<script>
+    // Pencereyi Aç/Kapa
+    function toggleChat() {
+        var chatBox = document.getElementById("chat-box");
+        if (chatBox.style.display === "none" || chatBox.style.display === "") {
+            chatBox.style.display = "flex";
+        } else {
+            chatBox.style.display = "none";
+        }
+    }
+
+    // Enter tuşuna basınca gönder
+    function handleEnter(e) {
+        if (e.key === "Enter") {
+            sendMessage();
+        }
+    }
+
+    // Mesaj Gönderme Fonksiyonu
+    async function sendMessage() {
+        var input = document.getElementById("chat-input");
+        var msg = input.value.trim();
+        if (msg === "") return;
+
+        //Kullanıcı Mesajını Ekrana Yaz
+        var logs = document.getElementById("chat-logs");
+        logs.innerHTML += `<div class="chat-msg chat-msg-user">${msg}</div>`;
+        input.value = "";
+        logs.scrollTop = logs.scrollHeight; // Aşağı kaydır
+
+        // Yükleniyor Mesajı Göster
+        var loadingId = "loading-" + Date.now();
+        logs.innerHTML += `<div id="${loadingId}" class="chat-msg chat-msg-ai"><i>Yazıyor...</i></div>`;
+        logs.scrollTop = logs.scrollHeight;
+
+        try {
+            // Backend'e Gönder 
+            let response = await fetch('/AI/Chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                    // Eğer AntiForgery kullanıyorsan buraya header eklenmeli
+                },
+                body: JSON.stringify({ message: msg })
+            });
+
+            if (!response.ok) throw new Error("Sunucu hatası");
+
+            let data = await response.json();
+
+            //Yükleniyor'u Kaldır ve Cevabı Yaz
+            document.getElementById(loadingId).remove();
+
+            logs.innerHTML += `<div class="chat-msg chat-msg-ai">${data.reply}</div>`;
+
+        } catch (err) {
+            document.getElementById(loadingId).remove();
+            logs.innerHTML += `<div class="chat-msg chat-msg-ai text-danger">Hata oluştu. Lütfen tekrar dene.</div>`;
+            console.error(err);
+        }
+
+        logs.scrollTop = logs.scrollHeight;
+    }
+</script>
