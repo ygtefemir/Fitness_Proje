@@ -13,7 +13,6 @@ builder.Services.AddControllersWithViews();
 //Ai servisi ekleniyor.
 builder.Services.AddScoped<Web_Proje.Services.AiService>();
 builder.Services.AddRazorPages();
-builder.Services.AddDbContext<GymContext>();
 builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<GymContext>();

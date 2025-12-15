@@ -16,7 +16,7 @@ namespace Web_Proje.Controllers
             _context = context;
         }
 
-        // 1. EĞİTMENİN HİZMETLERİNİ GETİR
+        // EĞİTMENİN HİZMETLERİNİ GETİR
         // Frontend'deki dropdown için "text" formatında veri döner.
         [HttpGet("{id}/services")]
         public async Task<IActionResult> GetTrainerServices(int id)
@@ -36,7 +36,7 @@ namespace Web_Proje.Controllers
             return Ok(services);
         }
 
-        // 2. MÜSAİT SAATLERİ (SLOTLARI) GETİR
+        // MÜSAİT SAATLERİ (SLOTLARI) GETİR
         // TimeSpan/TimeOnly dönüşümünü ve Çakışma kontrolünü yapar.
         [HttpGet("{id}/slots")]
         public async Task<IActionResult> GetDailySlots(int id, [FromQuery] string date, [FromQuery] int serviceId)
@@ -117,7 +117,7 @@ namespace Web_Proje.Controllers
             return Ok(trainers);
         }
 
-        // 3. TÜM HİZMETLERİ GETİR (Filtre Kaldırılınca Kullanılacak)
+        //TÜM HİZMETLERİ GETİR (Filtre Kaldırılınca Kullanılacak)
         [HttpGet("all-services")]
         public async Task<IActionResult> GetAllServices()
         {
@@ -132,7 +132,7 @@ namespace Web_Proje.Controllers
             return Ok(services);
         }
 
-        // 4. TÜM EĞİTMENLERİ GETİR
+        //TÜM EĞİTMENLERİ GETİR
         [HttpGet("all-trainers")]
         public async Task<IActionResult> GetAllTrainers()
         {

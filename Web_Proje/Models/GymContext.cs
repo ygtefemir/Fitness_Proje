@@ -6,6 +6,9 @@ namespace Web_Proje.Models
 {
     public class GymContext : IdentityDbContext<User, IdentityRole<int>, int>
     {
+        public GymContext(DbContextOptions<GymContext> options)
+            : base(options)
+        { }
 
         public DbSet<Gym> Gyms { get; set; }
 

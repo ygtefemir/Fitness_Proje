@@ -71,7 +71,7 @@
     <script type="text/javascript">
         $(document).ready(function () {
 
-            // --- 1. EĞİTMEN DEĞİŞTİĞİNDE ---
+            //EĞİTMEN DEĞİŞTİĞİNDE 
             $('#TrainerId').change(function () {
                 var trainerId = $(this).val();
                 var serviceDropdown = $('#ServiceId');
@@ -92,7 +92,7 @@
                 }
             });
 
-            // --- 2. HİZMET DEĞİŞTİĞİNDE ---
+            //HİZMET DEĞİŞTİĞİNDE
             $('#ServiceId').change(function () {
                 var serviceId = $(this).val();
                 var trainerDropdown = $('#TrainerId');
@@ -103,7 +103,7 @@
                     var url = '/api/TrainersApi/by-service/' + serviceId;
                     updateDropdown(trainerDropdown, url, currentTrainerId, 'name');
                 } else {
-                    // Hizmet seçimi kaldırıldıysa (--Seçiniz--): TÜM hocaları geri getir
+                    // Hizmet seçimi kaldırıldıysa TÜM hocaları geri getir
                     var url = '/api/TrainersApi/all-trainers';
                     updateDropdown(trainerDropdown, url, currentTrainerId, 'name');
                 }
@@ -112,13 +112,12 @@
                 loadSlots();
             });
 
-            // --- 3. TARİH DEĞİŞTİĞİNDE ---
+            // TARİH DEĞİŞTİĞİNDE 
             $('#datePicker').change(function() {
                 loadSlots();
             });
 
-            // --- YARDIMCI FONKSİYON: DROPDOWN GÜNCELLEME ---
-            // Bu fonksiyon hem hoca hem hizmet dropdown'ını güncellemek için ortaktır.
+            //Seçim kaldırıldığında dropdown güncelle
             function updateDropdown(dropdown, url, currentSelection, textFieldName) {
                 dropdown.prop('disabled', true); // Yüklenirken kilitle
 
@@ -146,7 +145,7 @@
                             }
                         });
 
-                        // KRİTİK NOKTA: Seçim geçerliyse KORU, değilse SIFIRLA
+                        // Seçim geçerliyse koru, değilse sıfırla
                         if (isSelectionValid && currentSelection) {
                             dropdown.val(currentSelection);
                         } else {
@@ -163,7 +162,7 @@
                 });
             }
 
-            // --- YARDIMCI FONKSİYON: SAATLERİ (SLOTS) GETİR ---
+            // Slot
             function loadSlots() {
                 var trainerId = $('#TrainerId').val();
                 var serviceId = $('#ServiceId').val();
@@ -201,7 +200,7 @@
                                     $('.slot-btn').removeClass('btn-success text-white').addClass('btn-outline-success');
                                     $(this).removeClass('btn-outline-success').addClass('btn-success text-white');
 
-                                    // Gizli input'a tam tarihi yaz (Örn: 2025-10-29T14:00:00)
+                                   
                                     $('#finalDateInput').val(selectedDate + 'T' + slot.time + ':00');
                                 });
                             }

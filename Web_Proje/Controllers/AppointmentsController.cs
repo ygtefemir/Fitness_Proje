@@ -54,7 +54,7 @@ namespace Web_Proje.Controllers
             ViewData["ServiceId"] = new SelectList(_context.Services, "Id", "Name");
             return View();
         }
-
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int id)
@@ -87,7 +87,7 @@ namespace Web_Proje.Controllers
             appointment.UserId = user.Id;
             appointment.Status = Status.Pending;
 
-            // 1. Önce Hizmetin Süresini Çekmeliyiz (Bitiş zamanını hesaplamak için)
+            // Servis süresini çek
             var service = await _context.Services.FindAsync(appointment.ServiceId);
             if (service == null)
             {
@@ -102,8 +102,7 @@ namespace Web_Proje.Controllers
                 appointment.GymId = chosenTrainee.GymId;
             }
 
-            // 2. YENİ ÇAKIŞMA KONTROLÜ (Overlap Check)
-            // Mantık: (YeniBaşla < EskiBit) VE (YeniBit > EskiBaşla)
+          
             int bufferMinutes = 15; 
 
             var newStart = appointment.AppointmentDate;
