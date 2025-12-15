@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<GymContext>(options =>
+    options.UseSqlServer(connectionString));
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 //Ai servisi ekleniyor.

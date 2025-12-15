@@ -81,45 +81,70 @@ namespace Web_Proje.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Appointment appointment) {
+        public async Task<IActionResult> Create(Appointment appointment)
+        {
             var user = await _userManager.GetUserAsync(User);
             appointment.UserId = user.Id;
-
             appointment.Status = Status.Pending;
 
-            var chosenTrainee = await _context.Trainers.FindAsync(appointment.TrainerId);
+            // 1. Önce Hizmetin Süresini Çekmeliyiz (Bitiş zamanını hesaplamak için)
+            var service = await _context.Services.FindAsync(appointment.ServiceId);
+            if (service == null)
+            {
+                ModelState.AddModelError("", "Hizmet bulunamadı.");
+                return View(appointment);
+            }
 
+            // Seçilen Eğitmeni ve Gym bilgisini al
+            var chosenTrainee = await _context.Trainers.FindAsync(appointment.TrainerId);
             if (chosenTrainee != null)
             {
                 appointment.GymId = chosenTrainee.GymId;
             }
 
-            bool is_conflict = _context.Appointments.Any(a =>
-                a.TrainerId == appointment.TrainerId &&
-                a.AppointmentDate == appointment.AppointmentDate &&
-                a.Status != Status.Rejected
-            );
+            // 2. YENİ ÇAKIŞMA KONTROLÜ (Overlap Check)
+            // Mantık: (YeniBaşla < EskiBit) VE (YeniBit > EskiBaşla)
+            int bufferMinutes = 15; 
+
+            var newStart = appointment.AppointmentDate;
+            var newEnd = newStart.AddMinutes(service.DurationMin + bufferMinutes);
+
+            bool is_conflict = await _context.Appointments
+                .Include(a => a.Service) // Eski randevunun süresini bilmek için Include şart!
+                .Where(a => a.TrainerId == appointment.TrainerId && a.Status != Status.Rejected)
+                .AnyAsync(a =>
+                    // Veritabanındaki randevunun başlangıcı < Yeni Bitiş
+                    a.AppointmentDate < newEnd &&
+                    // Veritabanındaki randevunun bitişi > Yeni Başlangıç
+                    a.AppointmentDate.AddMinutes(a.Service.DurationMin) > newStart
+                );
 
             if (is_conflict)
             {
-                ModelState.AddModelError("", "Seçilen eğitmen, seçilen saatte müsait değildir.");
+                ModelState.AddModelError("", "Seçilen eğitmen, bu saat aralığında başka bir randevu ile dolu.");
+
+                // Hata durumunda dropdownları tekrar doldur
+                ViewData["GymId"] = new SelectList(_context.Gyms, "Id", "Name", appointment.GymId);
+                ViewData["TrainerId"] = new SelectList(_context.Trainers, "Id", "Name", appointment.TrainerId);
+                ViewData["ServiceId"] = new SelectList(_context.Services, "Id", "Name", appointment.ServiceId);
+                return View(appointment);
             }
 
             if (ModelState.IsValid)
             {
                 _context.Add(appointment);
-                await _SaveChangesAsync();
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
 
+            // Model valid değilse dropdownları doldur
             ViewData["GymId"] = new SelectList(_context.Gyms, "Id", "Name", appointment.GymId);
             ViewData["TrainerId"] = new SelectList(_context.Trainers, "Id", "Name", appointment.TrainerId);
             ViewData["ServiceId"] = new SelectList(_context.Services, "Id", "Name", appointment.ServiceId);
 
             return View(appointment);
-
         }
-        
+
 
 
         [Authorize(Roles = "Admin")]
@@ -145,6 +170,7 @@ namespace Web_Proje.Controllers
             }
             return RedirectToAction(nameof(Index));
         }
+
         private async Task _SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

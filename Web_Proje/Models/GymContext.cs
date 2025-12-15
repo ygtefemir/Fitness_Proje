@@ -17,11 +17,6 @@ namespace Web_Proje.Models
 
         public DbSet<TrainerService> TrainerService { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder opt)
-        {
-            opt.UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=GymSystemDB;Trusted_Connection=True;MultipleActiveResultSets=true");
-
-        }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

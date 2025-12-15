@@ -1,45 +1,49 @@
 ﻿@model Web_Proje.Models.Appointment
 
 @{
-    ViewData["Title"] = "Yeni Randevu";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Yeni Randevu Oluştur";
 }
 
 <div class="container mt-4">
     <div class="row justify-content-center">
-        <div class="col-md-7">
-            <div class="card shadow">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">📅 Yeni Randevu Oluştur</h4>
+                    <h4 class="mb-0"><i class="bi bi-calendar-plus"></i> Yeni Randevu Al</h4>
                 </div>
                 <div class="card-body">
+
                     <form asp-action="Create">
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
                         <div class="form-group mb-3">
-                            <label asp-for="TrainerId" class="control-label fw-bold">Antrenör</label>
-                            <select asp-for="TrainerId" class="form-control form-select" id="TrainerId" asp-items="ViewBag.TrainerId">
-                                <option value="">-- Lütfen bir antrenör seçin --</option>
+                            <label asp-for="TrainerId" class="control-label fw-bold">Eğitmen Seçiniz</label>
+                            <select asp-for="TrainerId" class="form-select" asp-items="ViewBag.TrainerId">
+                                <option value="">-- Eğitmen Seçin --</option>
                             </select>
+                            <span asp-validation-for="TrainerId" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-3">
-                            <label asp-for="ServiceId" class="control-label fw-bold">Hizmet / Ders</label>
-                            <select asp-for="ServiceId" class="form-control form-select" id="ServiceId" disabled>
-                                <option value="">-- Önce Antrenör Seçiniz --</option>
+                            <label asp-for="ServiceId" class="control-label fw-bold">Hizmet Seçiniz</label>
+
+                            <select asp-for="ServiceId" class="form-select" asp-items="ViewBag.ServiceId">
+                                <option value="">-- Hizmet Seçiniz --</option>
                             </select>
+
+                            <span asp-validation-for="ServiceId" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-3">
-                            <label class="control-label fw-bold">Randevu Tarihi</label>
-                            <input type="date" id="datePicker" class="form-control"
-                                   min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                            <label class="control-label fw-bold">Tarih Seçiniz</label>
+                            <input type="date" id="datePicker" class="form-control" min="@DateTime.Now.ToString("yyyy-MM-dd")" />
                         </div>
 
-                        <div class="form-group mb-4">
-                            <label class="fw-bold mb-2">Müsait Saatler:</label>
-                            <div id="slotContainer" class="d-flex flex-wrap gap-2 p-3 border rounded bg-light">
-                                <span class="text-muted small">Lütfen antrenör, hizmet ve tarih seçiniz.</span>
+                        <div class="form-group mb-3">
+                            <label class="control-label fw-bold d-block">Müsait Saatler</label>
+
+                            <div id="slotContainer" class="p-3 border rounded bg-light text-center">
+                                <span class="text-muted small">Lütfen yukarıdan eğitmen, hizmet ve tarih seçiniz.</span>
                             </div>
 
                             <input type="hidden" asp-for="AppointmentDate" id="finalDateInput" />
@@ -47,16 +51,16 @@
                         </div>
 
                         <div class="d-grid gap-2">
-                            <input type="submit" value="Randevuyu Onayla" class="btn btn-success btn-lg" />
-                            <a asp-action="Index" class="btn btn-secondary">Listeye Dön</a>
+                            <button type="submit" class="btn btn-success btn-lg">Randevuyu Onayla</button>
+                            <a asp-action="Index" class="btn btn-secondary">İptal / Listeye Dön</a>
                         </div>
                     </form>
+
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
@@ -67,112 +71,150 @@
     <script type="text/javascript">
         $(document).ready(function () {
 
-            // --- 1. KISIM: ANTRENÖR DEĞİŞİNCE HİZMETLERİ GETİR ---
+            // --- 1. EĞİTMEN DEĞİŞTİĞİNDE ---
             $('#TrainerId').change(function () {
                 var trainerId = $(this).val();
                 var serviceDropdown = $('#ServiceId');
+                var currentServiceId = serviceDropdown.val(); // Mevcut seçili hizmeti hafızaya al
 
-                // Temizlik
-                serviceDropdown.empty();
-                serviceDropdown.append('<option value="">-- Yükleniyor... --</option>');
-                serviceDropdown.prop('disabled', true);
-
-                // Tarih ve Slotları da sıfırla (Hoca değişti çünkü)
+                // Slotları (Saatleri) ve tarihi temizle
                 $('#slotContainer').html('<span class="text-muted small">Lütfen hizmet ve tarih seçiniz.</span>');
                 $('#finalDateInput').val('');
 
                 if (trainerId) {
-                    // Hizmetleri Çek
-                    $.ajax({
-                        url: '/api/trainers/' + trainerId + '/services',
-                        type: 'GET',
-                        dataType: 'json',
-                        success: function (data) {
-                            serviceDropdown.empty();
-                            serviceDropdown.append('<option value="">-- Bir Hizmet Seçin --</option>');
-
-                            if (data.length > 0) {
-                                $.each(data, function (i, item) {
-                                    serviceDropdown.append($('<option>', {
-                                        value: item.id,
-                                        text: item.name + ' (' + item.price + ' TL)'
-                                    }));
-                                });
-                                serviceDropdown.prop('disabled', false);
-                            } else {
-                                serviceDropdown.append('<option value="">Hizmet bulunamadı</option>');
-                            }
-                        },
-                        error: function () {
-                            alert('Hizmetler yüklenemedi.');
-                        }
-                    });
+                    // Eğitmen seçildiyse: Sadece onun hizmetlerini getir
+                    var url = '/api/TrainersApi/' + trainerId + '/services';
+                    updateDropdown(serviceDropdown, url, currentServiceId, 'text');
                 } else {
-                    serviceDropdown.empty();
-                    serviceDropdown.append('<option value="">-- Önce Antrenör Seçiniz --</option>');
+                    // Eğitmen seçimi kaldırıldıysa (--Seçiniz--): TÜM hizmetleri geri getir
+                    var url = '/api/TrainersApi/all-services';
+                    updateDropdown(serviceDropdown, url, currentServiceId, 'text');
                 }
             });
 
-            // --- 2. KISIM: TARİH VEYA HİZMET DEĞİŞİNCE SAATLERİ (SLOTLARI) GETİR ---
-            $('#datePicker, #ServiceId').change(function() {
+            // --- 2. HİZMET DEĞİŞTİĞİNDE ---
+            $('#ServiceId').change(function () {
+                var serviceId = $(this).val();
+                var trainerDropdown = $('#TrainerId');
+                var currentTrainerId = trainerDropdown.val(); // Mevcut seçili hocayı hafızaya al
+
+                if (serviceId) {
+                    // Hizmet seçildiyse: Sadece o hizmeti veren hocaları getir
+                    var url = '/api/TrainersApi/by-service/' + serviceId;
+                    updateDropdown(trainerDropdown, url, currentTrainerId, 'name');
+                } else {
+                    // Hizmet seçimi kaldırıldıysa (--Seçiniz--): TÜM hocaları geri getir
+                    var url = '/api/TrainersApi/all-trainers';
+                    updateDropdown(trainerDropdown, url, currentTrainerId, 'name');
+                }
+
+                // Hizmet değişince süre değişir, saatleri tekrar hesapla
                 loadSlots();
             });
 
+            // --- 3. TARİH DEĞİŞTİĞİNDE ---
+            $('#datePicker').change(function() {
+                loadSlots();
+            });
+
+            // --- YARDIMCI FONKSİYON: DROPDOWN GÜNCELLEME ---
+            // Bu fonksiyon hem hoca hem hizmet dropdown'ını güncellemek için ortaktır.
+            function updateDropdown(dropdown, url, currentSelection, textFieldName) {
+                dropdown.prop('disabled', true); // Yüklenirken kilitle
+
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        dropdown.empty().append('<option value="">-- Seçiniz --</option>');
+
+                        var isSelectionValid = false;
+
+                        $.each(data, function (i, item) {
+                            // API'den bazen 'text' (hizmetler) bazen 'name' (hocalar) geliyor
+                            var textToShow = item[textFieldName] || item.text || item.name;
+
+                            dropdown.append($('<option>', {
+                                value: item.id,
+                                text: textToShow
+                            }));
+
+                            // Eğer hafızadaki seçim yeni gelen listede varsa, geçerlidir
+                            if (item.id == currentSelection) {
+                                isSelectionValid = true;
+                            }
+                        });
+
+                        // KRİTİK NOKTA: Seçim geçerliyse KORU, değilse SIFIRLA
+                        if (isSelectionValid && currentSelection) {
+                            dropdown.val(currentSelection);
+                        } else {
+                            dropdown.val('');
+                        }
+
+                        dropdown.prop('disabled', false); // Kilidi aç
+                    },
+                    error: function () {
+                        console.error("Veri yüklenemedi: " + url);
+                        dropdown.empty().append('<option value="">Hata oluştu</option>');
+                        dropdown.prop('disabled', false);
+                    }
+                });
+            }
+
+            // --- YARDIMCI FONKSİYON: SAATLERİ (SLOTS) GETİR ---
             function loadSlots() {
                 var trainerId = $('#TrainerId').val();
                 var serviceId = $('#ServiceId').val();
                 var selectedDate = $('#datePicker').val();
                 var container = $('#slotContainer');
-                var finalInput = $('#finalDateInput');
 
-                // Hepsi seçili değilse işlem yapma
-                if (!trainerId || !selectedDate || !serviceId) {
-                    return;
-                }
+                // Üçü de seçili değilse işlem yapma
+                if (!trainerId || !selectedDate || !serviceId) return;
 
                 container.html('<div class="spinner-border text-primary spinner-border-sm"></div> Saatler hesaplanıyor...');
 
-                // Slotları Çek
                 $.ajax({
-                    url: '/api/trainers/' + trainerId + '/slots',
+                    url: '/api/TrainersApi/' + trainerId + '/slots',
                     type: 'GET',
-                    data: { date: selectedDate, serviceId: serviceId },
+                    data: { serviceId: serviceId, date: selectedDate },
                     success: function (slots) {
                         container.empty();
-                        finalInput.val(''); // Eski seçimi temizle
+                        $('#finalDateInput').val(''); // Önceki saat seçimini temizle
 
                         if (slots.length === 0) {
-                            container.html('<span class="text-danger fw-bold">Bu kriterlere uygun boş saat yok.</span>');
+                            container.html('<span class="text-danger fw-bold">Uygun saat yok.</span>');
                             return;
                         }
 
-                        // Slotları Buton Olarak Diz
                         $.each(slots, function (i, slot) {
+                            // Müsaitlik durumuna göre buton stili
                             var btnClass = slot.isAvailable ? 'btn-outline-success' : 'btn-secondary disabled';
                             var disabledAttr = slot.isAvailable ? '' : 'disabled';
 
-                            // Buton Oluştur
                             var btn = $(`<button type="button" class="btn ${btnClass} slot-btn m-1" ${disabledAttr} style="min-width: 80px;">${slot.time}</button>`);
 
                             if (slot.isAvailable) {
                                 btn.click(function() {
-                                    // Görsel Seçim Efekti
+                                    // Seçim görseli
                                     $('.slot-btn').removeClass('btn-success text-white').addClass('btn-outline-success');
                                     $(this).removeClass('btn-outline-success').addClass('btn-success text-white');
 
-                                    // Gizli Inputu Doldur (Format: 2025-12-08T09:00:00)
-                                    var combinedDate = selectedDate + 'T' + slot.time + ':00';
-                                    finalInput.val(combinedDate);
+                                    // Gizli input'a tam tarihi yaz (Örn: 2025-10-29T14:00:00)
+                                    $('#finalDateInput').val(selectedDate + 'T' + slot.time + ':00');
                                 });
                             }
                             container.append(btn);
                         });
                     },
                     error: function() {
-                        container.html('<span class="text-danger">Saatler yüklenirken hata oluştu.</span>');
+                        container.html('<span class="text-danger">Saat bilgisi alınamadı.</span>');
                     }
                 });
             }
+
         });
+    </script>
     </script>
 }
