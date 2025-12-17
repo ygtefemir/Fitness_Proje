@@ -1,42 +1,55 @@
-﻿@model Web_Proje.Models.Trainer
+﻿@model Web_Proje.Models.TrainerApiDto
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Eğitmen Detayı";
 }
 
-<h1>Details</h1>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0"><i class="bi bi-person-lines-fill"></i> Eğitmen Detayı</h4>
+                </div>
+                <div class="card-body">
 
-<div>
-    <h4>Trainer</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Specialty)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Specialty)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ShiftStart)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ShiftStart)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ShiftEnd)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ShiftEnd)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+                    <div class="row mb-3 border-bottom pb-2">
+                        <div class="col-sm-4 fw-bold text-muted">Adı:</div>
+                        <div class="col-sm-8 fs-5">@Model.Name</div>
+                    </div>
+
+                    <div class="row mb-3 border-bottom pb-2">
+                        <div class="col-sm-4 fw-bold text-muted">Uzmanlık:</div>
+                        <div class="col-sm-8 fs-5">@Model.Specialty</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold text-muted">Hizmetler:</div>
+                        <div class="col-sm-8">
+                            @if (Model.Services != null && Model.Services.Any())
+                            {
+                                foreach (var s in Model.Services)
+                                {
+                                    <span class="badge bg-secondary me-1 mb-1 fs-6">@s</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted fst-italic">Hizmet bilgisi yok.</span>
+                            }
+                        </div>
+                    </div>
+
+                </div>
+                <div class="card-footer bg-white border-top-0 d-flex justify-content-end gap-2">
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Düzenle
+                    </a>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Listeye Dön
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

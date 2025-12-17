@@ -7,11 +7,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Web_Proje.Models;
-using Web_Proje.Models.ViewModels;
-
+using Web_Proje.Models.ViewModels; 
 namespace Web_Proje.Controllers
 {
-    [Authorize(Roles="Admin")]
+    [Authorize(Roles = "Admin")]
     public class TrainersController : Controller
     {
         private readonly GymContext _context;
@@ -20,74 +19,86 @@ namespace Web_Proje.Controllers
         {
             _context = context;
         }
-
-        // GET: Trainers
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Trainers.ToListAsync());
+            // Trainer ve TrainerApiDto
+            var trainers = await _context.Trainers
+                .Include(t => t.TrainerServices)
+                .ThenInclude(ts => ts.service)
+                .Select(t => new TrainerApiDto
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    Specialty = t.Specialty,
+                    GymId = t.GymId,
+                    ShiftStart = t.ShiftStart,
+                    ShiftEnd = t.ShiftEnd,
+                    // İlişkili hizmet isimlerini virgülle ayırıp göstermek istersen:
+                    Services = t.TrainerServices.Select(ts => ts.service.Name).ToList()
+                })
+                .ToListAsync();
+
+            return View(trainers);
         }
 
-        // GET: Trainers/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var trainer = await _context.Trainers
+                .Include(t => t.Gym)
+                .Include(t => t.TrainerServices)
+                .ThenInclude(ts => ts.service)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (trainer == null)
-            {
-                return NotFound();
-            }
+
+            if (trainer == null) return NotFound();
 
             return View(trainer);
         }
-
-        // GET: Trainers/Create
         public IActionResult Create()
         {
-            var allServices = _context.Services.ToList();
-            var ViewModel = new TrainerViewModel
-            {
-                Services = allServices.Select(s => new TrainerViewModel.AssignedServiceData
-                {
-                    ServiceId = s.Id,
-                    ServiceName = s.Name,
-                    Assigned = false
-                }).ToList()
-            };
+            //Frontend listeleme için
+            ViewBag.GymList = new SelectList(_context.Gyms, "Id", "Name");
+            ViewBag.AllServices = _context.Services.ToList();
 
-            ViewData["GymId"] = new SelectList(_context.Gyms, "Id", "Name");
-            return View(ViewModel);
+            return View(new TrainerApiDto());
         }
 
-        // POST: Trainers/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(TrainerViewModel ViewModel, int[] selectedServices)
+        public async Task<IActionResult> Create(TrainerApiDto model, int[] ServiceIds)
         {
+           //Saat doğrulama
+            var gym = await _context.Gyms.FindAsync(model.GymId);
+            if (gym != null)
+            {
+                if (model.ShiftStart < gym.OpeningHour)
+                {
+                    ModelState.AddModelError("ShiftStart", $"Hata: Mesai ({model.ShiftStart}), salon açılışından ({gym.OpeningHour}) önce başlayamaz.");
+                }
+                if (model.ShiftEnd > gym.ClosingTime)
+                {
+                    ModelState.AddModelError("ShiftEnd", $"Hata: Mesai ({model.ShiftEnd}), salon kapanışından ({gym.ClosingTime}) sonra bitemez.");
+                }
+            }
+
             if (ModelState.IsValid)
             {
-                // Trainer Nesnesini Oluştur
+                // Trainer ve Dto eşlemesi
                 var trainer = new Trainer
                 {
-                    Name = ViewModel.Name,
-                    Specialty = ViewModel.Specialty,
-                    ShiftStart = ViewModel.ShiftStart,
-                    ShiftEnd = ViewModel.ShiftEnd,
-                    GymId = ViewModel.GymId,
-                    // Listeyi başlatıyoruz
-                    TrainerServices = new List<TrainerService>()
+                    Name = model.Name,
+                    Specialty = model.Specialty,
+                    ShiftStart = model.ShiftStart,
+                    ShiftEnd = model.ShiftEnd,
+                    GymId = model.GymId,
+                    TrainerServices = new List<TrainerService>() // Listeyi başlat
                 };
 
-                //Seçilen Checkbox'ları (ID'leri) Dönüp Ekliyoruz
-                if (selectedServices != null)
+                
+                if (ServiceIds != null)
                 {
-                    foreach (var serviceId in selectedServices)
+                    foreach (var serviceId in ServiceIds)
                     {
                         trainer.TrainerServices.Add(new TrainerService
                         {
@@ -96,42 +107,31 @@ namespace Web_Proje.Controllers
                     }
                 }
 
-                //aydet
                 _context.Add(trainer);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
 
-            // Hata varsa sayfayı tekrar doldurup gönder
-            
-            ViewModel.Services = _context.Services.Select(s => new TrainerViewModel.AssignedServiceData
-            {
-                ServiceId = s.Id,
-                ServiceName = s.Name,
-                Assigned = false
-            }).ToList();
+            //Modelde Hata var
 
-            ViewData["GymId"] = new SelectList(_context.Gyms, "Id", "Name", ViewModel.GymId);
-            return View(ViewModel);
+            // Listeleri tekrar doldur
+            ViewBag.GymList = new SelectList(_context.Gyms, "Id", "Name", model.GymId);
+            ViewBag.AllServices = _context.Services.ToList();
+            //tekrar model gönder (yazılar silinmesin)
+            return View(model);
         }
-
-
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
 
-            // Antrenörü ve ilişkili derslerini çek
+            // Eğitmeni ve Hizmet İlişkilerini Çek
             var trainer = await _context.Trainers
-                .Include(t => t.TrainerServices)
+                .Include(t => t.TrainerServices) // İlişkiyi dahil et
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (trainer == null) return NotFound();
 
-            // derslerinin ID'lerini bir listeye al (Hızlı kontrol için HashSet)
-            var currentServiceIds = trainer.TrainerServices.Select(ts => ts.ServiceId).ToHashSet();
-
-            //Entity'i ViewModel'e çevir
-            var viewModel = new TrainerViewModel
+            var trainerDto = new TrainerApiDto
             {
                 Id = trainer.Id,
                 Name = trainer.Name,
@@ -139,55 +139,54 @@ namespace Web_Proje.Controllers
                 ShiftStart = trainer.ShiftStart,
                 ShiftEnd = trainer.ShiftEnd,
                 GymId = trainer.GymId,
-                // Checkbox listesini hazırlıyoruz
-                Services = _context.Services.Select(s => new TrainerViewModel.AssignedServiceData
-                {
-                    ServiceId = s.Id,
-                    ServiceName = s.Name,
-                    // sahipse 'Assigned' true olsun (Kutu işaretli gelsin)
-                    Assigned = currentServiceIds.Contains(s.Id)
-                }).ToList()
+                ServiceIds = trainer.TrainerServices.Select(ts => ts.ServiceId).ToList()
             };
 
-            ViewData["GymId"] = new SelectList(_context.Gyms, "Id", "Name", trainer.GymId);
-            return View(viewModel);
+            ViewBag.GymList = new SelectList(_context.Gyms, "Id", "Name", trainer.GymId);
+            ViewBag.AllServices = _context.Services.ToList(); // (List<Web_Proje.Models.Services>) cast için
+
+            return View(trainerDto);
         }
 
-
-        // POST: Trainers/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, TrainerViewModel viewModel, int[] selectedServices)
+        public async Task<IActionResult> Edit(int id, TrainerApiDto model, int[] ServiceIds)
         {
-            if (id != viewModel.Id) return NotFound();
+            if (id != model.Id) return NotFound();
+
+            var gym = await _context.Gyms.FindAsync(model.GymId);
+            if (gym != null)
+            {
+                if (model.ShiftStart < gym.OpeningHour)
+                {
+                    ModelState.AddModelError("ShiftStart", $"Hata: Mesai ({model.ShiftStart}), salon açılışından ({gym.OpeningHour}) önce başlayamaz.");
+                }
+                if (model.ShiftEnd > gym.ClosingTime)
+                {
+                    ModelState.AddModelError("ShiftEnd", $"Hata: Mesai ({model.ShiftEnd}), salon kapanışından ({gym.ClosingTime}) sonra bitemez.");
+                }
+            }
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    //hocayı çek
                     var trainerToUpdate = await _context.Trainers
-                        .Include(t => t.TrainerServices)
+                        .Include(t => t.TrainerServices) 
                         .FirstOrDefaultAsync(t => t.Id == id);
 
                     if (trainerToUpdate == null) return NotFound();
 
-                    //normal bilgileri güncelle
-                    trainerToUpdate.Name = viewModel.Name;
-                    trainerToUpdate.Specialty = viewModel.Specialty;
-                    trainerToUpdate.ShiftStart = viewModel.ShiftStart;
-                    trainerToUpdate.ShiftEnd = viewModel.ShiftEnd;
-                    trainerToUpdate.GymId = viewModel.GymId;
+                    trainerToUpdate.Name = model.Name;
+                    trainerToUpdate.Specialty = model.Specialty;
+                    trainerToUpdate.ShiftStart = model.ShiftStart;
+                    trainerToUpdate.ShiftEnd = model.ShiftEnd;
+                    trainerToUpdate.GymId = model.GymId;
 
-                    // (Veritabanındaki mevcut listeyi siliyoruz)
-                    trainerToUpdate.TrainerServices.Clear();
-
-                    //yeni seçilenleri ekle
-                    if (selectedServices != null)
+                    trainerToUpdate.TrainerServices.Clear(); // Eskileri sil
+                    if (ServiceIds != null)
                     {
-                        foreach (var serviceId in selectedServices)
+                        foreach (var serviceId in ServiceIds)
                         {
                             trainerToUpdate.TrainerServices.Add(new TrainerService
                             {
@@ -197,57 +196,55 @@ namespace Web_Proje.Controllers
                         }
                     }
 
-                    // Kaydet
                     _context.Update(trainerToUpdate);
                     await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!TrainerExists(viewModel.Id)) return NotFound();
+                    if (!TrainerExists(model.Id)) return NotFound();
                     else throw;
                 }
-                return RedirectToAction(nameof(Index));
             }
 
-            return View(viewModel);
-        }
+            // Hata
 
-        // GET: Trainers/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            // Checkbox'ların seçili kalması için model.ServiceIds'i güncelle
+            model.ServiceIds = ServiceIds?.ToList() ?? new List<int>();
 
-            var trainer = await _context.Trainers
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (trainer == null)
-            {
-                return NotFound();
-            }
+            ViewBag.GymList = new SelectList(_context.Gyms, "Id", "Name", model.GymId);
+            ViewBag.AllServices = _context.Services.ToList();
 
-            return View(trainer);
-        }
-
-        // POST: Trainers/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var trainer = await _context.Trainers.FindAsync(id);
-            if (trainer != null)
-            {
-                _context.Trainers.Remove(trainer);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return View(model);
         }
 
         private bool TrainerExists(int id)
         {
             return _context.Trainers.Any(e => e.Id == id);
+        }
+
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var trainer = await _context.Trainers
+                .Include(t => t.Gym)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (trainer == null) return NotFound();
+
+            return View(trainer);
+        }
+
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var trainer = await _context.Trainers.FindAsync(id);
+            if (trainer != null) _context.Trainers.Remove(trainer);
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
     }
 }

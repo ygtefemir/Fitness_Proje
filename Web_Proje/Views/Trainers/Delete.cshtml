@@ -1,45 +1,51 @@
-﻿@model Web_Proje.Models.Trainer
+﻿@model Web_Proje.Models.TrainerApiDto
 
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = "Eğitmen Sil";
 }
 
-<h1>Delete</h1>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Silme Onayı</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning text-center">
+                        <i class="bi bi-exclamation-circle fs-1 d-block mb-2"></i>
+                        <strong>Bu eğitmeni silmek istediğinize emin misiniz?</strong>
+                        <p class="mb-0">Bu işlem geri alınamaz ve eğitmene bağlı randevuları etkileyebilir.</p>
+                    </div>
 
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>Trainer</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Name)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Specialty)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Specialty)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ShiftStart)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ShiftStart)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ShiftEnd)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ShiftEnd)
-        </dd>
-    </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="Id" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+                    <dl class="row">
+                        <dt class="col-sm-4">Eğitmen Adı:</dt>
+                        <dd class="col-sm-8 fw-bold">@Model.Name</dd>
+
+                        <dt class="col-sm-4">Branş:</dt>
+                        <dd class="col-sm-8">@Model.Specialty</dd>
+
+                        <dt class="col-sm-4">Hizmetler:</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.Services != null)
+                            {
+                                @string.Join(", ", Model.Services)
+                            }
+                        </dd>
+                    </dl>
+                </div>
+                <div class="card-footer bg-white d-flex justify-content-center gap-2">
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" asp-for="Id" />
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="bi bi-trash"></i> Evet, Sil
+                        </button>
+                    </form>
+                    <a asp-action="Index" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-x-lg"></i> İptal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

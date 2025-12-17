@@ -1,82 +1,190 @@
-﻿@model IEnumerable<Web_Proje.Models.Appointment>
+﻿@model IEnumerable<Web_Proje.Models.AppointmentApiDto>
 
 @{
-    ViewData["Title"] = "Index";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Randevular";
+    bool isAdmin = User.IsInRole("Admin");
+    bool isPast = ViewBag.IsPast ?? false;
+    int? currentTrainerId = ViewBag.CurrentTrainerId;
 }
 
-<h1>Index</h1>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>
+            <i class="bi bi-calendar-check"></i>
+            @(isAdmin ? "Yönetim Paneli" : "Randevularım")
+        </h2>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.User)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Gym)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Trainer)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Service)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.AppointmentDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Status)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.User.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Gym.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Trainer.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Service.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.AppointmentDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Status)
-            </td>
-            <td>
-                @if (User.IsInRole("Admin")){
-                    @if (item.Status == Status.Pending){
-                        <a asp-action="Approve" asp-route-id="@item.Id">Onayla</a>
-                        <div>|</div>
-                        <a asp-action="Deny" asp-route-id="@item.Id">Reddet</a>
+        @if (!isAdmin)
+        {
+            <a asp-action="Create" class="btn btn-primary shadow-sm">
+                <i class="bi bi-plus-lg"></i> Yeni Randevu
+            </a>
+        }
+    </div>
+
+    <div class="card mb-4 shadow-sm bg-light border-0">
+        <div class="card-body p-2">
+
+            @if (currentTrainerId != null)
+            {
+                <div class="alert alert-info d-flex justify-content-between align-items-center mb-2 mx-1">
+                    <span>
+                        <i class="bi bi-funnel-fill"></i> Şu anda seçili eğitmenin randevularını görüntülüyorsunuz.
+                    </span>
+                    <a asp-action="Index" asp-controller="Trainers" class="btn btn-sm btn-light border">
+                        <i class="bi bi-x-lg"></i> Geri Dön
+                    </a>
+                </div>
+            }
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <ul class="nav nav-pills">
+                    <li class="nav-item">
+                        <a class="nav-link @(!isPast ? "active" : "")"
+                           asp-action="Index"
+                           asp-route-isPast="false"
+                           asp-route-trainerId="@currentTrainerId">
+                            <i class="bi bi-hourglass-split"></i> Gelecek
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link @(isPast ? "active" : "")"
+                           asp-action="Index"
+                           asp-route-isPast="true"
+                           asp-route-trainerId="@currentTrainerId">
+                            <i class="bi bi-clock-history"></i> Geçmiş
+                        </a>
+                    </li>
+                </ul>
+
+                @if (isAdmin)
+                {
+                    <form asp-action="Index" method="get" class="d-flex">
+                        <input type="hidden" name="isPast" value="@isPast.ToString().ToLower()" />
+                        @if (currentTrainerId != null)
+                        {
+                            <input type="hidden" name="trainerId" value="@currentTrainerId" />
                         }
-                    }else if(!User.IsInRole("Admin") && item.AppointmentDate > DateTime.Now)
-                    {
-                        <form asp-action="Cancel" asp-route-id="@item.Id" method="post" style="display:inline;">
-                            <button type="submit" class="btn btn-sm btn-outline-danger"
-                                    onclick="return confirm('Randevuyu iptal etmek istediğinize emin misiniz?');">
-                                 İptal Et
+
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control form-control-sm"
+                                   placeholder="İsim veya ID ara..." value="@ViewBag.CurrentSearch">
+                            <button type="submit" class="btn btn-secondary btn-sm">
+                                <i class="bi bi-search"></i> Ara
                             </button>
-                        </form>
-                    }
-                    else if (!User.IsInRole("Admin"))
+                        </div>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover mb-0 bg-white align-middle">
+            <thead class="bg-primary text-white">
+                <tr>
+                    @if (isAdmin)
                     {
-                        <span class="text-muted small">Tamamlandı</span>
+                        <th>ID / Üye</th>
                     }
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+                    <th>Tarih</th>
+                    <th>Saat</th>
+                    <th>Salon</th>
+                    <th>Antrenör</th>
+                    <th>Hizmet</th>
+                    <th>Durum</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            Kayıtlı randevu bulunamadı.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            @if (isAdmin)
+                            {
+                                <td>
+                                    <span class="badge bg-light text-dark border mb-1">#@item.UserId</span><br>
+                                    <span class="fw-bold small text-primary">@item.UserName</span>
+                                </td>
+                            }
+
+                            <td>@item.AppointmentDate.ToString("dd.MM.yyyy")</td>
+
+                            <td>
+                                <span class="fw-bold text-dark">
+                                    <i class="bi bi-clock"></i> @item.AppointmentDate.ToString("HH:mm")
+                                </span>
+                            </td>
+
+                            <td>@item.GymName</td>
+                            <td>@item.TrainerName</td>
+                            <td><span class="badge bg-info text-dark">@item.ServiceName</span></td>
+
+                            <td>
+                                @{
+                                    string badgeClass = "bg-secondary";
+                                    string statusText = item.Status;
+
+                                    if (item.Status == "Confirmed") { badgeClass = "bg-success"; statusText = "Onaylandı"; }
+                                    else if (item.Status == "Pending") { badgeClass = "bg-warning text-dark"; statusText = "Bekliyor"; }
+                                    else if (item.Status == "Rejected") { badgeClass = "bg-danger"; statusText = "Reddedildi"; }
+                                    else if (item.Status == "Completed") { badgeClass = "bg-secondary"; statusText = "Tamamlandı"; }
+                                    else if (item.Status == "NotCompleted") { badgeClass = "bg-danger"; statusText = "Süresi Geçti"; }
+                                }
+                                <span class="badge @badgeClass">@statusText</span>
+                            </td>
+
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    @if (User.IsInRole("Admin") && item.Status == Web_Proje.Models.Status.Pending.ToString())
+                                    {
+                                        <div class="btn-group">
+                                            <form asp-action="Approve" asp-route-id="@item.Id" method="post" style="display:inline;">
+                                                <button type="submit" class="btn btn-success btn-sm">Onayla</button>
+                                            </form>
+
+                                            <form asp-action="Deny" asp-route-id="@item.Id" method="post" style="display:inline; margin-left:5px;">
+                                                <button type="submit" class="btn btn-danger btn-sm">Reddet</button>
+                                            </form>
+                                        </div>
+                                    }
+                                    else if (item.Status == Web_Proje.Models.Status.Confirmed.ToString())
+                                    {
+                                        <span class="badge bg-success">Onaylandı</span>
+                                    }
+                                    else if (item.Status == Web_Proje.Models.Status.Rejected.ToString())
+                                    {
+                                        <span class="badge bg-danger">Reddedildi</span>
+                                    }
+
+                                    <div>
+
+                                    @if (item.CanCancel && User.IsInRole("Member"))
+                                    {
+                                        <form asp-action="Cancel" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Bu randevuyu iptal etmek istediğinize emin misiniz?');">
+                                            <button type="submit" class="btn btn-danger" title="İptal Et / Sil">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

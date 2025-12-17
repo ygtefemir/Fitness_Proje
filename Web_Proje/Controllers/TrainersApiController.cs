@@ -18,22 +18,127 @@ namespace Web_Proje.Controllers
 
         // EĞİTMENİN HİZMETLERİNİ GETİR
         // Frontend'deki dropdown için "text" formatında veri döner.
-        [HttpGet("{id}/services")]
-        public async Task<IActionResult> GetTrainerServices(int id)
+        [HttpGet]
+        public async Task<IActionResult> GetTrainers()
         {
-            var services = await _context.Services
-                .Where(s => s.TrainerServices.Any(ts => ts.TrainerId == id))
-                .Select(s => new
+            var trainers = await _context.Trainers
+                .Include(t => t.TrainerServices)
+                .ThenInclude(ts => ts.service)
+                .Select(t => new TrainerApiDto
                 {
-                    id = s.Id,
-                    // ÖNEMLİ: Frontend (jQuery) 'text' alanı bekliyor
-                    text = $"{s.Name} ({s.DurationMin} dk - {s.Price} TL)",
-                    price = s.Price,
-                    duration = s.DurationMin
+                    Id = t.Id,
+                    Name = t.Name,
+                    Specialty = t.Specialty,
+                    GymId = t.GymId,
+                    Services = t.TrainerServices.Select(ts => ts.service.Name).ToList(),
+                    ShiftStart = t.ShiftStart,
+                    ShiftEnd = t.ShiftEnd
                 })
                 .ToListAsync();
 
-            return Ok(services);
+            return Ok(trainers);
+        }
+
+        // EĞİTMEN DETAY GETİR
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetTrainer(int id)
+        {
+            var trainer = await _context.Trainers
+                .Include(t => t.TrainerServices)
+                .FirstOrDefaultAsync(t => t.Id == id);
+            if (trainer == null) return NotFound();
+
+            var dto = new TrainerApiDto
+            {
+                Id = trainer.Id,
+                Name = trainer.Name,
+                Specialty = trainer.Specialty,
+                ServiceIds = trainer.TrainerServices.Select(ts => ts.ServiceId).ToList(),
+                ShiftStart = trainer.ShiftStart,
+                ShiftEnd = trainer.ShiftEnd
+            };
+
+            return Ok(dto);
+        }
+        //YENİ EĞİTMEN OLUŞTUR
+        [HttpPost]
+        public async Task<IActionResult> CreateTrainer([FromBody] TrainerApiDto dto)
+        {
+            var trainer = new Trainer
+            {
+                Name = dto.Name,
+                Specialty = dto.Specialty,
+                GymId = dto.GymId,
+                ShiftStart = dto.ShiftStart, 
+                ShiftEnd = dto.ShiftEnd
+
+            };
+
+            _context.Trainers.Add(trainer);
+            await _context.SaveChangesAsync();
+
+            if (dto.ServiceIds != null && dto.ServiceIds.Any())
+            {
+                foreach (var serviceId in dto.ServiceIds)
+                {
+                    _context.TrainerService.Add(new TrainerService
+                    {
+                        TrainerId = trainer.Id,
+                        ServiceId = serviceId
+                    });
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok(new { message = "Eklendi" });
+        }
+
+        // EĞİTMEN GÜNCELLE
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateTrainer(int id, [FromBody] TrainerApiDto dto)
+        {
+            if (id != dto.Id) return BadRequest();
+
+            var trainer = await _context.Trainers
+                .Include(t => t.TrainerServices)
+                .FirstOrDefaultAsync(t => t.Id == id);
+            if (trainer == null) return NotFound();
+
+            trainer.Name = dto.Name;
+            trainer.Specialty = dto.Specialty;
+            trainer.GymId = dto.GymId;
+            trainer.ShiftStart = dto.ShiftStart;
+            trainer.ShiftEnd = dto.ShiftEnd;
+
+            _context.TrainerService.RemoveRange(trainer.TrainerServices);
+
+            if (dto.ServiceIds != null)
+            {
+                foreach (var serviceId in dto.ServiceIds)
+                {
+                    _context.TrainerService.Add(new TrainerService
+                    {
+                        TrainerId = trainer.Id,
+                        ServiceId = serviceId
+                    });
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Güncellendi" });
+        }
+
+        // EĞİTMEN SİL
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteTrainer(int id)
+        {
+            var trainer = await _context.Trainers.FindAsync(id);
+            if (trainer == null) return NotFound();
+
+            _context.Trainers.Remove(trainer);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Silindi." });
         }
 
         // MÜSAİT SAATLERİ (SLOTLARI) GETİR

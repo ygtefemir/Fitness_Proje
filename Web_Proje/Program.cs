@@ -16,6 +16,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddDefaultIdentity<User>(options => options.SignIn.RequireConfirmedAccount = false)
     .AddRoles<IdentityRole<int>>()
     .AddEntityFrameworkStores<GymContext>();
+builder.Services.AddHostedService<AppointmentStatusWorker>();
 
 
 var app = builder.Build();

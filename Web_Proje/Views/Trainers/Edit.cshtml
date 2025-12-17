@@ -1,104 +1,92 @@
-﻿@model Web_Proje.Models.ViewModels.TrainerViewModel
+﻿@model Web_Proje.Models.TrainerApiDto
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Eğitmen Düzenle";
 }
 
-<h1>Hocayı Düzenle</h1>
-
-<h4>Trainer</h4>
-<hr />
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-            <input type="hidden" asp-for="Id" />
-
-            <div class="form-group mb-3">
-                <label asp-for="Name" class="control-label fw-bold">Ad Soyad</label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="Specialty" class="control-label fw-bold">Uzmanlık Alanı</label>
-                <input asp-for="Specialty" class="form-control" />
-                <span asp-validation-for="Specialty" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="GymId" class="control-label fw-bold">Çalıştığı Salon</label>
-                <select asp-for="GymId" class="form-control form-select" asp-items="ViewBag.GymId">
-                    <option value="">-- Bir Spor Salonu Seçin --</option>
-                </select>
-                <span asp-validation-for="GymId" class="text-danger"></span>
-            </div>
-
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="ShiftStart" class="control-label fw-bold">Mesai Başlangıç</label>
-                        <input asp-for="ShiftStart" type="time" class="form-control" />
-                        <span asp-validation-for="ShiftStart" class="text-danger"></span>
-                    </div>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Eğitmen Düzenle</h4>
                 </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label asp-for="ShiftEnd" class="control-label fw-bold">Mesai Bitiş</label>
-                        <input asp-for="ShiftEnd" type="time" class="form-control" />
-                        <span asp-validation-for="ShiftEnd" class="text-danger"></span>
-                    </div>
-                </div>
-            </div>
+                <div class="card-body p-4">
 
-            <div class="card mb-3 shadow-sm">
-                <div class="card-header bg-warning text-dark fw-bold">
-                    <i class="bi bi-check-all"></i> Verdiği Dersler
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        @if (Model.Services != null)
-                        {
-                            @foreach (var item in Model.Services)
-                            {
-                                <div class="col-md-6 mb-2">
-                                    <div class="form-check">
-                                        <input class="form-check-input"
-                                               type="checkbox"
-                                               name="selectedServices"
-                                               value="@item.ServiceId"
-                                               id="service_@item.ServiceId"
-                                               @(item.Assigned ? "checked" : "")>
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
 
-                                        <label class="form-check-label user-select-none" for="service_@item.ServiceId">
-                                            @item.ServiceName
-                                        </label>
-                                    </div>
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label fw-bold">Eğitmen Adı</label>
+                            <input asp-for="Name" class="form-control" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="GymId" class="form-label fw-bold">Bağlı Olduğu Salon</label>
+                            <select asp-for="GymId" class="form-select" asp-items="ViewBag.GymList" required>
+                                <option value="">-- Salon Seçiniz --</option>
+                            </select>
+                            <span asp-validation-for="GymId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Specialty" class="form-label fw-bold">Uzmanlık Alanı</label>
+                            <input asp-for="Specialty" class="form-control" required />
+                            <span asp-validation-for="Specialty" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold d-block">Verdiği Hizmetler</label>
+                            <div class="card bg-light border-0">
+                                <div class="card-body p-3" style="max-height: 200px; overflow-y: auto;">
+                                    @if (ViewBag.AllServices != null)
+                                    {
+                                        foreach (var service in (List<Web_Proje.Models.Services>)ViewBag.AllServices)
+                                        {
+                                            // Checkbox işaretli mi kontrolü
+                                            bool isChecked = Model.ServiceIds != null && Model.ServiceIds.Contains(service.Id);
+
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="ServiceIds"
+                                                       value="@service.Id" id="srv_@service.Id"
+                                                       @(isChecked ? "checked" : "")>
+                                                <label class="form-check-label" for="srv_@service.Id">
+                                                    @service.Name
+                                                </label>
+                                            </div>
+                                        }
+                                    }
                                 </div>
-                            }
-                        }
-                        else
-                        {
-                            <div class="text-danger">Hizmet listesi yüklenemedi.</div>
-                        }
-                    </div>
+                            </div>
+                            <div class="form-text text-muted">Eğitmenin verdiği dersleri güncelleyebilirsiniz.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ShiftStart" class="form-label fw-bold">Mesai Başlangıç</label>
+                                <input asp-for="ShiftStart" type="time" class="form-control" required />
+                                <span asp-validation-for="ShiftStart" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ShiftEnd" class="form-label fw-bold">Mesai Bitiş</label>
+                                <input asp-for="ShiftEnd" type="time" class="form-control" required />
+                                <span asp-validation-for="ShiftEnd" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Güncelle
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Listeye Dön
+                            </a>
+                        </div>
+                    </form>
+
                 </div>
             </div>
-
-            <div class="form-group mt-3">
-                <input type="submit" value="Değişiklikleri Kaydet" class="btn btn-primary w-100" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
-
-<div class="mt-3">
-    <a asp-action="Index" class="btn btn-secondary">Listeye Dön</a>
-</div>
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}

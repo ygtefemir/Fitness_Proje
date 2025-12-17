@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Policy;
+using System.Text.Json;
 using Web_Proje.Models;
 
 namespace Web_Proje.Controllers
@@ -20,41 +21,94 @@ namespace Web_Proje.Controllers
             _userManager = userManager;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(bool isPast = false, string search = "", int? trainerId=null)
         {
-            var user = await _userManager.GetUserAsync(User);
+            List<AppointmentApiDto> randevular = new List<AppointmentApiDto>();
 
-            if (await _userManager.IsInRoleAsync(user, "Admin"))
+            using (var client = new HttpClient())
             {
-                var allAppointments = _context.Appointments
-                    .Include(a => a.Trainer) 
-                    .Include(a => a.Service) 
-                    .Include(a => a.User) 
-                    .Include(a => a.Gym); 
+                // API'nin tam adresi (Localhost portunu dinamik alır)
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                client.BaseAddress = new Uri(baseUrl);
 
-                return View(await allAppointments.ToListAsync());
+                // cookie iletiyoruz ki login kalsın.
+                foreach (var cookie in Request.Cookies)
+                {
+                    client.DefaultRequestHeaders.Add("Cookie", $"{cookie.Key}={cookie.Value}");
+                }
+
+                string apiUrl = $"/api/AppointmentsApi?isPast={isPast}&search={search}";
+
+                if (trainerId.HasValue)
+                {
+                    apiUrl += $"&trainerId={trainerId}";
+                    ViewBag.CurrentTrainerId = trainerId; // View'da kullanmak için
+                }
+
+                // API'ye İstek At (JSON İste)
+                
+                var response = await client.GetAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // SON String'i oku
+                    var jsonString = await response.Content.ReadAsStringAsync();
+
+                    //JSON'u C# Listesine Çevir (Deserialize)
+                    // PropertyNameCaseInsensitive: 'id' ile 'Id' eşleşsin diye.
+                    randevular = JsonSerializer.Deserialize<List<AppointmentApiDto>>(jsonString,
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                }
+                else
+                {
+                    // Hata olursa boş liste veya hata mesajı
+                    ModelState.AddModelError("", "API verisi çekilemedi.");
+                }
             }
-            else
-            { 
-                var myAppointments = _context.Appointments
-                    .Include(a => a.Trainer)
-                    .Include(a => a.Service)
-                    .Include(a => a.Gym)
-                    .Where(a => a.UserId == user.Id); 
 
-                return View(await myAppointments.ToListAsync());
-            }
+            // View'a durumu bildirmek için
+            ViewBag.IsPast = isPast;
+            ViewBag.CurrentSearch = search;
 
-
+            //Listeyi View'a gönder
+            return View(randevular);
         }
         public IActionResult Create()
         {
-            ViewData["GymId"] = new SelectList(_context.Gyms, "Id", "Name");
-            ViewData["TrainerId"] = new SelectList(_context.Trainers, "Id", "Name");
-            ViewData["ServiceId"] = new SelectList(_context.Services, "Id", "Name");
+            //Eğitmenler, Gymler, Hizmetler verisini çek
+
+            // Eğitmenler
+            var trainers = _context.Trainers
+                .Include(t => t.TrainerServices)
+                .Select(t => new
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    GymId = t.GymId,
+                    ServiceIds = t.TrainerServices.Select(ts => ts.ServiceId).ToList()
+                }).ToList();
+
+            // Gymler
+            var gyms = _context.Gyms
+                .Select(g => new { Id = g.Id, Name = g.Name })
+                .ToList();
+
+            // Hizmetler
+            var services = _context.Services
+                .Select(s => new { Id = s.Id, Name = s.Name, Price = s.Price })
+                .ToList();
+
+            //Bu veriyi JSON olarak View'a taşı
+            ViewBag.MasterData = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Trainers = trainers,
+                Gyms = gyms,
+                Services = services
+            });
+
             return View();
         }
-        
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int id)

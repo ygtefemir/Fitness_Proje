@@ -1,82 +1,89 @@
-﻿@model Web_Proje.Models.ViewModels.TrainerViewModel
+﻿@model Web_Proje.Models.TrainerApiDto
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Yeni Eğitmen Ekle";
 }
 
-<h1>Create</h1>
-
-<h4>Trainer</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Specialty" class="control-label"></label>
-                <input asp-for="Specialty" class="form-control" />
-                <span asp-validation-for="Specialty" class="text-danger"></span>
-            </div>
-            <div class="form-group mb-3">
-                <label asp-for="GymId" class="control-label fw-bold">Çalıştığı Salon</label>
-
-                <select asp-for="GymId" class="form-control form-select" asp-items="ViewBag.GymId">
-                    <option value="">-- Bir Spor Salonu Seçin --</option>
-                </select>
-
-                <span asp-validation-for="GymId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ShiftStart" class="control-label"></label>
-                <input asp-for="ShiftStart" class="form-control" />
-                <span asp-validation-for="ShiftStart" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ShiftEnd" class="control-label"></label>
-                <input asp-for="ShiftEnd" class="form-control" />
-                <span asp-validation-for="ShiftEnd" class="text-danger"></span>
-            </div>
-            <div class="card mb-3">
-                <div class="card-header bg-light fw-bold">
-                    Hizmetler / Dersler
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-person-plus-fill"></i> Yeni Eğitmen Ekle</h4>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        @foreach (var item in Model.Services)
-                        {
-                            <div class="col-md-4 mb-2">
-                                <div class="form-check">
-                                    <input class="form-check-input"
-                                           type="checkbox"
-                                           name="selectedServices"
-                                           value="@item.ServiceId"
-                                           id="service_@item.ServiceId">
+                <div class="card-body p-4">
 
-                                    <label class="form-check-label" for="service_@item.ServiceId">
-                                        @item.ServiceName
-                                    </label>
+                    <form asp-action="Create" method="post">
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label fw-bold">Eğitmen Adı</label>
+                            <input asp-for="Name" class="form-control" placeholder="Örn: Ahmet" required />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="GymId" class="form-label fw-bold">Bağlı Olduğu Salon</label>
+                            <select asp-for="GymId" class="form-select" asp-items="ViewBag.GymList" required>
+                                <option value="">-- Salon Seçiniz --</option>
+                            </select>
+                            <span asp-validation-for="GymId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Specialty" class="form-label fw-bold">Uzmanlık Alanı (Branş)</label>
+                            <input asp-for="Specialty" class="form-control" placeholder="Örn: Fitness & Pilates" required />
+                            <span asp-validation-for="Specialty" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold d-block">Verebileceği Hizmetler</label>
+                            <div class="card bg-light border-0">
+                                <div class="card-body p-3" style="max-height: 200px; overflow-y: auto;">
+                                    @if (ViewBag.AllServices != null)
+                                    {
+                                        foreach (var service in (List<Web_Proje.Models.Services>)ViewBag.AllServices)
+                                        {
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="ServiceIds" value="@service.Id" id="srv_@service.Id">
+                                                <label class="form-check-label" for="srv_@service.Id">
+                                                    @service.Name
+                                                </label>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted mb-0">Sistemde kayıtlı hizmet bulunamadı.</p>
+                                    }
                                 </div>
                             </div>
-                        }
-                    </div>
+                            <div class="form-text text-muted">Eğitmenin verebileceği dersleri listeden seçiniz.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ShiftStart" class="form-label fw-bold">Mesai Başlangıç</label>
+                                <input asp-for="ShiftStart" type="time" class="form-control" required />
+                                <span asp-validation-for="ShiftStart" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ShiftEnd" class="form-label fw-bold">Mesai Bitiş</label>
+                                <input asp-for="ShiftEnd" type="time" class="form-control" required />
+                                <span asp-validation-for="ShiftEnd" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg"></i> Kaydet
+                            </button>
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Listeye Dön
+                            </a>
+                        </div>
+                    </form>
+
                 </div>
             </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}
