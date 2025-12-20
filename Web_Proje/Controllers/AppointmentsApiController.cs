@@ -66,7 +66,7 @@ namespace Web_Proje.Controllers
             else // "upcoming"
             {
                 query = query.Where(a => a.AppointmentDate >= DateTime.Now &&
-                                         (a.Status == Status.Pending || a.Status == Status.Confirmed))
+                                         (a.Status == Status.Pending || a.Status == Status.Confirmed || a.Status == Status.Rejected))
                              .OrderBy(a => a.AppointmentDate);
             }
 

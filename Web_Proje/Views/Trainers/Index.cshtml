@@ -1,57 +1,121 @@
 ﻿@model IEnumerable<Web_Proje.Models.TrainerApiDto>
+
 @{
-    ViewData["Title"] = "Eğitmenler";
+    ViewData["Title"] = "Eğitmenlerimiz";
 }
 
-<div class="page-header text-center" style="background: linear-gradient(135deg, #6610f2, #6f42c1);">
-    <h2><i class="bi bi-people-fill"></i> Eğitmen Kadromuz</h2>
-    <p>Alanında uzman profesyonellerle çalışın</p>
-</div>
-
-<div class="container">
-    <div class="d-flex justify-content-end mb-4">
-        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-person-plus"></i> Yeni Eğitmen Ekle</a>
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-primary">Profesyonel Eğitmenlerimiz</h2>
+        <p class="text-muted">Size en yakın salonumuzdaki uzmanlarla tanışın.</p>
+        <hr class="w-25 mx-auto text-primary" />
     </div>
 
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        @foreach (var item in Model)
+    @if (User.IsInRole("Admin"))
+    {
+        <div class="d-flex justify-content-end mb-4">
+            <a asp-action="Create" class="btn btn-primary shadow-sm">
+                <i class="bi bi-person-plus"></i> Yeni Eğitmen Ekle
+            </a>
+        </div>
+    }
+
+    @if (Model != null && Model.Any())
+    {
+        @foreach (var group in Model.GroupBy(t => t.GymName))
         {
-            <div class="col">
-                <div class="card h-100 hover-card shadow-sm">
-                    <div class="card-body text-center">
-                        <div class="mb-3">
-                            <img src="https://ui-avatars.com/api/?name=@item.Name&background=random&size=100" class="rounded-circle shadow" alt="@item.Name">
-                        </div>
+            <div class="mb-5">
+                <div class="d-flex align-items-center mb-3 p-3 bg-white rounded shadow-sm border-start border-5 border-primary">
+                    <div class="bg-primary text-white rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                    <h3 class="fw-bold m-0 text-dark">
+                        @(string.IsNullOrEmpty(group.Key) ? "Diğer Salonlar" : group.Key)
+                    </h3>
+                </div>
 
-                        <h5 class="card-title fw-bold">@item.Name</h5>
-                        <p class="text-primary mb-1">@item.Specialty</p>
+                <div class="row row-cols-1 row-cols-md-3 g-4">
+                    @foreach (var item in group)
+                    {
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0 hover-effect">
+                                <div class="card-body text-center">
 
-                        <div class="small text-muted mb-3">
-                            <i class="bi bi-clock"></i> @item.ShiftStart - @item.ShiftEnd
-                        </div>
+                                    <div class="mb-3 position-relative d-inline-block">
+                                        <img src="https://ui-avatars.com/api/?name=@item.Name&background=random&size=128&bold=true"
+                                             class="rounded-circle shadow"
+                                             alt="@item.Name"
+                                             style="width: 120px; height: 120px; border: 4px solid #fff;">
+                                    </div>
 
-                        <div class="mb-3">
-                            @if (item.Services != null)
-                            {
-                                @foreach (var service in item.Services)
+                                    <h5 class="card-title fw-bold">@item.Name</h5>
+                                    <p class="text-primary mb-1 fw-medium">@item.Specialty</p>
+
+                                    <div class="small text-muted mb-3 bg-light d-inline-block px-2 py-1 rounded">
+                                        <i class="bi bi-clock"></i> @item.ShiftStart - @item.ShiftEnd
+                                    </div>
+
+                                    <div class="mb-3">
+                                        @if (item.Services != null && item.Services.Any())
+                                        {
+                                            @foreach (var serviceName in item.Services)
+                                            {
+                                                <span class="badge bg-light text-dark border me-1 mb-1">@serviceName</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small fst-italic">Hizmet bilgisi yok</span>
+                                        }
+                                    </div>
+
+                                    @if (User.IsInRole("Admin"))
+                                    {<div class="d-flex justify-content-center gap-2 mt-3">
+                                        <a asp-controller="Appointments"
+                                           asp-action="Index"
+                                           asp-route-trainerId="@item.Id"
+                                           class="btn btn-info text-white btn-sm shadow-sm">
+                                            <i class="bi bi-calendar3"></i> Programı
+                                        </a>
+                                    </div>}
+                                </div>
+
+                                @if (User.IsInRole("Admin"))
                                 {
-                                    <span class="badge bg-light text-dark border me-1">@service</span>
+                                    <div class="card-footer bg-white border-top-0 d-flex justify-content-center gap-2 pb-3">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning">
+                                            <i class="bi bi-pencil"></i> Düzenle
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i> Sil
+                                        </a>
+                                    </div>
                                 }
-                            }
-                        </div>
-                    </div>
-                    <div class="card-footer bg-white d-flex justify-content-between">
-                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info text-white">Profil</a>
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <div>
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></a>
                             </div>
-                        }
-                    </div>
+                        </div>
+                    }
                 </div>
             </div>
         }
-    </div>
+    }
+    else
+    {
+        <div class="col-12">
+            <div class="alert alert-warning text-center shadow-sm">
+                <i class="bi bi-exclamation-circle fs-4 d-block mb-2"></i>
+                Listelenecek eğitmen bulunamadı.
+            </div>
+        </div>
+    }
 </div>
+
+<style>
+    .hover-effect {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .hover-effect:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+</style>

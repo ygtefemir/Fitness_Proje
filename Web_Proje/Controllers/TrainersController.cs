@@ -10,7 +10,6 @@ using Web_Proje.Models;
 using Web_Proje.Models.ViewModels; 
 namespace Web_Proje.Controllers
 {
-    [Authorize(Roles = "Admin")]
     public class TrainersController : Controller
     {
         private readonly GymContext _context;
@@ -31,9 +30,9 @@ namespace Web_Proje.Controllers
                     Name = t.Name,
                     Specialty = t.Specialty,
                     GymId = t.GymId,
+                    GymName = t.Gym.Name,
                     ShiftStart = t.ShiftStart,
                     ShiftEnd = t.ShiftEnd,
-                    // İlişkili hizmet isimlerini virgülle ayırıp göstermek istersen:
                     Services = t.TrainerServices.Select(ts => ts.service.Name).ToList()
                 })
                 .ToListAsync();
@@ -68,7 +67,8 @@ namespace Web_Proje.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(TrainerApiDto model, int[] ServiceIds)
         {
-           //Saat doğrulama
+            ModelState.Remove("GymName");
+            //Saat doğrulama
             var gym = await _context.Gyms.FindAsync(model.GymId);
             if (gym != null)
             {
@@ -153,6 +153,8 @@ namespace Web_Proje.Controllers
         public async Task<IActionResult> Edit(int id, TrainerApiDto model, int[] ServiceIds)
         {
             if (id != model.Id) return NotFound();
+
+            ModelState.Remove("GymName");
 
             var gym = await _context.Gyms.FindAsync(model.GymId);
             if (gym != null)

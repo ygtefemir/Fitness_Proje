@@ -14,8 +14,11 @@ namespace Web_Proje.Models
         [JsonPropertyName("specialty")] // Uzmanlık alanı
         public string Specialty { get; set; }
 
-        [JsonPropertyName("gymId")] // Uzmanlık alanı
+        [JsonPropertyName("gymId")] 
         public int GymId { get; set; }
+
+        [JsonPropertyName("gymName")] 
+        public string GymName { get; set; }
 
         [JsonPropertyName("shiftStart")]
         public TimeSpan ShiftStart { get; set; }

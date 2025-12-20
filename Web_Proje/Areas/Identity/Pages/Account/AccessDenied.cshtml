@@ -1,0 +1,26 @@
+﻿@page
+@model AccessDeniedModel
+@{
+    ViewData["Title"] = "Erişim Engellendi";
+}
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+    <div class="card shadow-lg border-0 text-center p-5" style="max-width: 600px;">
+        <div class="card-body">
+            <div class="mb-4">
+                <i class="bi bi-slash-circle-fill text-danger" style="font-size: 5rem;"></i>
+            </div>
+
+            <h1 class="text-danger fw-bold">Erişim Reddedildi!</h1>
+            <p class="lead text-muted mt-3">
+                Bu sayfayı görüntülemek için yeterli yetkiye sahip değilsiniz.
+            </p>
+
+            <hr class="my-4" />
+
+            <a href="/" class="btn btn-outline-secondary btn-lg rounded-pill px-5">
+                <i class="bi bi-house-door"></i> Ana Sayfaya Dön
+            </a>
+        </div>
+    </div>
+</div>

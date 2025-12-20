@@ -1,48 +1,73 @@
 ﻿@model Web_Proje.Models.Gym
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Yeni Salon Ekle";
 }
 
-<h1>Create</h1>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h4 class="mb-0 fw-bold">
+                        <i class="bi bi-building-add"></i> Yeni Spor Salonu Ekle
+                    </h4>
+                </div>
 
-<h4>Gym</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+                <div class="card-body p-4">
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="mb-4">
+                            <label asp-for="Name" class="form-label fw-bold text-secondary">
+                                <i class="bi bi-card-heading"></i> Salon Adı
+                            </label>
+                            <input asp-for="Name" class="form-control form-control-lg" placeholder="Örn: FitLife Merkez Kampüs" />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Address" class="form-label fw-bold text-secondary">
+                                <i class="bi bi-geo-alt-fill"></i> Açık Adres
+                            </label>
+                            <textarea asp-for="Address" class="form-control" rows="3" placeholder="Mahalle, Cadde, No..."></textarea>
+                            <span asp-validation-for="Address" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label asp-for="OpeningHour" class="form-label fw-bold text-secondary">
+                                    <i class="bi bi-clock"></i> Açılış Saati
+                                </label>
+                                <input asp-for="OpeningHour" type="time" class="form-control" />
+                                <span asp-validation-for="OpeningHour" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="ClosingTime" class="form-label fw-bold text-secondary">
+                                    <i class="bi bi-clock-history"></i> Kapanış Saati
+                                </label>
+                                <input asp-for="ClosingTime" type="time" class="form-control" />
+                                <span asp-validation-for="ClosingTime" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg shadow-sm">
+                                <i class="bi bi-check-circle-fill"></i> Kaydet
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Listeye Dön
+                            </a>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Address" class="control-label"></label>
-                <input asp-for="Address" class="form-control" />
-                <span asp-validation-for="Address" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="OpeningHour" class="control-label"></label>
-                <input asp-for="OpeningHour" class="form-control" />
-                <span asp-validation-for="OpeningHour" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ClosingTime" class="control-label"></label>
-                <input asp-for="ClosingTime" class="form-control" />
-                <span asp-validation-for="ClosingTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

@@ -1,43 +1,60 @@
 ﻿@model Web_Proje.Models.Services
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Yeni Hizmet Ekle";
 }
 
-<h1>Create</h1>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0">
 
-<h4>Services</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+                <div class="card-header bg-warning text-dark py-3">
+                    <h4 class="mb-0 fw-bold">
+                        <i class="bi bi-lightning-fill"></i> Yeni Hizmet Tanımla
+                    </h4>
+                </div>
+
+                <div class="card-body p-4">
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Name" class="form-control" placeholder="Hizmet Adı" />
+                            <label asp-for="Name"><i class="bi bi-tag"></i> Hizmet Adı (Örn: Pilates)</label>
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="DurationMin" type="number" class="form-control" placeholder="Dakika" min="10" step="5" />
+                            <label asp-for="DurationMin"><i class="bi bi-stopwatch"></i> Süre (Dakika)</label>
+                            <span asp-validation-for="DurationMin" class="text-danger small"></span>
+                        </div>
+
+                        <div class="input-group mb-4">
+                            <span class="input-group-text bg-light fw-bold">₺</span>
+                            <div class="form-floating flex-grow-1">
+                                <input asp-for="Price" type="number" class="form-control" placeholder="Fiyat" min="0" />
+                                <label asp-for="Price" class="ps-2">Seans Ücreti</label>
+                            </div>
+                        </div>
+                        <span asp-validation-for="Price" class="text-danger small d-block mb-3"></span>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-light border">İptal</a>
+                            <button type="submit" class="btn btn-warning fw-bold px-4 shadow-sm">
+                                <i class="bi bi-save"></i> Hizmeti Kaydet
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="DurationMin" class="control-label"></label>
-                <input asp-for="DurationMin" class="form-control" />
-                <span asp-validation-for="DurationMin" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Price" class="control-label"></label>
-                <input asp-for="Price" class="form-control" />
-                <span asp-validation-for="Price" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

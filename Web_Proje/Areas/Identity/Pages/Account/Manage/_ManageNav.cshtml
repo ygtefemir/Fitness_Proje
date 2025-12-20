@@ -1,0 +1,36 @@
+﻿@inject SignInManager<Web_Proje.Models.User> SignInManager
+@{
+    var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+}
+
+<div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+    <a class="nav-link mb-2 @ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">
+        <i class="bi bi-person-circle me-2"></i> Profil
+    </a>
+
+    <a class="nav-link mb-2 @ManageNavPages.ChangePasswordNavClass(ViewContext)" id="change-password" asp-page="./ChangePassword">
+        <i class="bi bi-key-fill me-2"></i> Şifre Değiştir
+    </a>
+
+</div>
+
+<style>
+    /* Menü Aktifken */
+    .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+        background-color: #0d6efd; /* Senin ana rengin */
+        color: white;
+        font-weight: 600;
+        border-radius: 10px;
+    }
+    /* Menü Pasifken */
+    .nav-pills .nav-link {
+        color: #555;
+        border-radius: 10px;
+        transition: all 0.3s;
+    }
+
+        .nav-pills .nav-link:hover {
+            background-color: #f0f2f5;
+            color: #0d6efd;
+        }
+</style>

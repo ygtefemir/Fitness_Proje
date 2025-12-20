@@ -1,44 +1,64 @@
 ﻿@model Web_Proje.Models.Services
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Hizmeti Düzenle";
 }
 
-<h1>Edit</h1>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0">
 
-<h4>Services</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+                <div class="card-header bg-primary text-white py-3">
+                    <h4 class="mb-0 fw-bold">
+                        <i class="bi bi-sliders"></i> Hizmet Detaylarını Düzenle
+                    </h4>
+                </div>
+
+                <div class="card-body p-4">
+                    <form asp-action="Edit">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Name" class="form-control" placeholder="Hizmet Adı" />
+                            <label asp-for="Name"><i class="bi bi-tag"></i> Hizmet Adı</label>
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="DurationMin" type="number" class="form-control" placeholder="Dakika" min="10" step="5" />
+                            <label asp-for="DurationMin"><i class="bi bi-stopwatch"></i> Süre (Dakika)</label>
+                            <span asp-validation-for="DurationMin" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Price" class="form-label text-secondary small fw-bold ps-1">Seans Ücreti</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light fw-bold">₺</span>
+                                <input asp-for="Price" type="number" class="form-control form-control-lg" placeholder="Fiyat" min="0" />
+                            </div>
+                            <span asp-validation-for="Price" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                                <i class="bi bi-check-lg"></i> Güncelle
+                            </button>
+                            <a asp-action="Index" class="btn btn-light border text-muted">
+                                Vazgeç ve Geri Dön
+                            </a>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="DurationMin" class="control-label"></label>
-                <input asp-for="DurationMin" class="form-control" />
-                <span asp-validation-for="DurationMin" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Price" class="control-label"></label>
-                <input asp-for="Price" class="form-control" />
-                <span asp-validation-for="Price" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
