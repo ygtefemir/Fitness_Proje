@@ -1,5 +1,4 @@
 FitLife, spor salonu yöneticileri ile üyeler arasındaki etkileşimi dijitalleştiren, modern web teknolojileriyle geliştirilmiş kapsamlı bir yönetim ve randevu sistemidir.
-
 Bu proje, Sakarya Üniversitesi Bilgisayar Mühendisliği Web Programlama dersi kapsamında geliştirilmiştir
 
 -Dinamik Randevu Sistemi: Üyeler; salon, eğitmen ve hizmet seçimi yaparak, eğitmenin mesai saatleri ve doluluk durumuna göre çakışma olmadan randevu alabilirler.
