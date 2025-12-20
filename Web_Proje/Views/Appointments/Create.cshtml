@@ -20,22 +20,22 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-4 form-group">
-                                <label class="control-label fw-bold">Spor Salonu</label>
-                                <select id="GymId" name="GymId" class="form-control" onchange="filterOptions('gym')">
+                                <label class="control-label fw-bold">Spor Salonu <span class="text-danger">*</span></label>
+                                <select id="GymId" name="GymId" class="form-control" onchange="filterOptions('gym')" required>
                                     <option value="">-- Yükleniyor... --</option>
                                 </select>
                             </div>
 
                             <div class="col-md-4 form-group">
-                                <label class="control-label fw-bold">Hizmet Türü</label>
-                                <select id="ServiceId" name="ServiceId" class="form-control" onchange="filterOptions('service')">
+                                <label class="control-label fw-bold">Hizmet Türü <span class="text-danger">*</span></label>
+                                <select id="ServiceId" name="ServiceId" class="form-control" onchange="filterOptions('service')" required>
                                     <option value="">-- Yükleniyor... --</option>
                                 </select>
                             </div>
 
                             <div class="col-md-4 form-group">
-                                <label class="control-label fw-bold">Eğitmen</label>
-                                <select id="TrainerId" name="TrainerId" class="form-control" onchange="filterOptions('trainer')">
+                                <label class="control-label fw-bold">Eğitmen <span class="text-danger">*</span></label>
+                                <select id="TrainerId" name="TrainerId" class="form-control" onchange="filterOptions('trainer')" required>
                                     <option value="">-- Yükleniyor... --</option>
                                 </select>
                             </div>
@@ -88,16 +88,13 @@
         const masterData = @Html.Raw(ViewBag.MasterData ?? "{}");
 
         $(document).ready(function () {
-            // Veri boşsa uyarı
             if (!masterData.Trainers || !masterData.Gyms) {
                 console.error("MasterData eksik! Controller tarafını kontrol et.");
                 return;
             }
-            // Sayfa açılışında tüm listeleri doldur
             initDropdowns();
         });
 
-        // --- İLK YÜKLEME ---
         function initDropdowns() {
             populateSelect("GymId", masterData.Gyms);
             populateSelect("ServiceId", masterData.Services);
@@ -113,56 +110,77 @@
             dataList.forEach(item => {
                 const option = document.createElement("option");
                 option.value = item.Id;
-                option.text = (item.Name || item.name) + (item.Price || item.price ? ` (${item.Price||item.price} TL)` : '');
+
+                // Hizmetler için özel formatlama (süre + fiyat)
+                if ((item.DurationMin || item.durationMin) && (item.Price || item.price)) {
+                    const duration = item.DurationMin || item.durationMin;
+                    const price = item.Price || item.price;
+                    option.text = `${item.Name || item.name} (${duration} dk - ${price} TL)`;
+                } else {
+                    option.text = item.Name || item.name;
+                }
+
                 select.appendChild(option);
             });
 
-            
             if (currentVal && dataList.some(x => (x.Id || x.id) == currentVal)) {
                 select.value = currentVal;
             } else {
                 select.value = "";
             }
 
-            // Tarih kısmını kontrol et
             checkDateSectionVisibility();
         }
 
-       
         function filterOptions(source) {
             const selectedGymId = document.getElementById("GymId").value;
             const selectedServiceId = document.getElementById("ServiceId").value;
             const selectedTrainerId = document.getElementById("TrainerId").value;
 
-            
             let filteredTrainers = masterData.Trainers.filter(t => {
                 const gymMatch = !selectedGymId || t.GymId == selectedGymId;
-                
                 const serviceMatch = !selectedServiceId || t.ServiceIds.includes(parseInt(selectedServiceId));
                 return gymMatch && serviceMatch;
             });
 
-            
             let filteredGyms = masterData.Gyms.filter(g => {
                 if (!selectedTrainerId) return true;
                 const trainer = masterData.Trainers.find(t => t.Id == selectedTrainerId);
                 return trainer && trainer.GymId == g.Id;
             });
 
-            
             let filteredServices = masterData.Services.filter(s => {
                 if (!selectedTrainerId) return true;
                 const trainer = masterData.Trainers.find(t => t.Id == selectedTrainerId);
                 return trainer && trainer.ServiceIds.includes(s.Id);
             });
 
-            
             if (source !== 'gym') populateSelect("GymId", filteredGyms, selectedGymId);
             if (source !== 'service') populateSelect("ServiceId", filteredServices, selectedServiceId);
             if (source !== 'trainer') populateSelect("TrainerId", filteredTrainers, selectedTrainerId);
 
-            // Slotları temizle çünkü kriterler değişti
-            document.getElementById("slotsContainer").innerHTML = '<span class="text-warning">Kriterler değişti, lütfen tekrar tarih seçiniz.</span>';
+            // Kriterler değişti - tarih ve saat bölümünü tamamen temizle
+            clearDateTimeSection();
+        }
+
+        function clearDateTimeSection() {
+            // Tarih input'unu temizle
+            const dateInput = document.getElementById("selectedDate");
+            if (dateInput) {
+                dateInput.value = "";
+            }
+
+            // Slotları temizle ve bilgi mesajı göster
+            const slotsContainer = document.getElementById("slotsContainer");
+            slotsContainer.innerHTML = '<span class="text-muted small">Lütfen önce tarih seçiniz.</span>';
+
+            // Hidden datetime input'unu temizle
+            const finalDateTime = document.getElementById("finalDateTime");
+            if (finalDateTime) {
+                finalDateTime.value = "";
+            }
+
+            // Submit butonunu devre dışı bırak
             document.getElementById("submitBtn").disabled = true;
         }
 
@@ -171,28 +189,29 @@
             const serviceId = document.getElementById("ServiceId").value;
             const dateSection = document.getElementById("dateSection");
 
-            
             if(trainerId && serviceId) {
                 dateSection.style.display = "block";
+                // Tarih bölümü yeni açıldığında temizle
+                clearDateTimeSection();
             } else {
                 dateSection.style.display = "none";
             }
         }
 
-       
-        //api/TrainersApi/{id}/slots metodunu kullanır
         async function getSlots() {
             const trainerId = document.getElementById("TrainerId").value;
             const serviceId = document.getElementById("ServiceId").value;
             const dateVal = document.getElementById("selectedDate").value;
             const container = document.getElementById("slotsContainer");
 
-            if (!trainerId || !serviceId || !dateVal) return;
+            if (!trainerId || !serviceId || !dateVal) {
+                container.innerHTML = '<span class="text-muted small">Lütfen tüm kriterleri doldurun.</span>';
+                return;
+            }
 
-            container.innerHTML = 'Yukleniyor...';
+            container.innerHTML = '<span class="text-primary"><span class="spinner-border spinner-border-sm"></span> Müsait saatler yükleniyor...</span>';
 
             try {
-                // URL: /api/TrainersApi/5/slots?date=2023-10-29&serviceId=2
                 const response = await fetch(`/api/TrainersApi/${trainerId}/slots?date=${dateVal}&serviceId=${serviceId}`);
                 if (!response.ok) throw new Error("Slotlar alınamadı");
 
@@ -205,7 +224,6 @@
                 }
 
                 slots.forEach(slot => {
-                    // Buton oluştur
                     const btn = document.createElement("button");
                     btn.type = "button";
                     btn.className = slot.isAvailable ? "btn btn-outline-success m-1" : "btn btn-outline-secondary m-1 disabled";
@@ -214,15 +232,12 @@
 
                     if (slot.isAvailable) {
                         btn.onclick = function() {
-                            // Seçimi işaretle
                             document.querySelectorAll("#slotsContainer button").forEach(b => b.classList.remove("active"));
                             btn.classList.add("active");
 
-                            // Hidden input'a tam DateTime formatında yaz
                             const finalDate = `${dateVal}T${slot.time}:00`;
                             document.getElementById("finalDateTime").value = finalDate;
 
-                            // Kaydet butonunu aç
                             document.getElementById("submitBtn").disabled = false;
                         };
                     }
@@ -231,7 +246,7 @@
 
             } catch (err) {
                 console.error(err);
-                container.innerHTML = '<span class="text-danger">Hata oluştu.</span>';
+                container.innerHTML = '<span class="text-danger">Hata oluştu. Lütfen tekrar deneyin.</span>';
             }
         }
     </script>

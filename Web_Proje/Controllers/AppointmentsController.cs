@@ -95,7 +95,7 @@ namespace Web_Proje.Controllers
 
             // Hizmetler
             var services = _context.Services
-                .Select(s => new { Id = s.Id, Name = s.Name, Price = s.Price })
+                .Select(s => new { Id = s.Id, Name = s.Name, DurationMin = s.DurationMin, Price = s.Price })
                 .ToList();
 
             //Bu veriyi JSON olarak View'a taşı

@@ -4,48 +4,79 @@
     ViewData["Title"] = "Kayıt Ol";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg hover-card" style="border-radius: 20px; overflow: hidden;">
 
-<div class="row">
-    <div class="col-md-4">
-        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <h2>Yeni Hesap Oluştur</h2>
-            <hr />
-            <div class="form-floating mb-3">
-                <input asp-for="Input.FirstName" class="form-control" placeholder="Adınız" />
-                <label asp-for="Input.FirstName">Ad</label>
-                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
-            </div>
+                <div class="card-header text-center text-white py-4" style="background: linear-gradient(135deg, #fd7e14, #dc3545);">
+                    <h3 class="fw-bold mb-0"><i class="bi bi-person-plus-fill"></i> Aramıza Katıl</h3>
+                    <p class="mb-0 text-white-50">Hemen formunu tutmaya başla</p>
+                </div>
 
-            <div class="form-floating mb-3">
-                <input asp-for="Input.LastName" class="form-control" placeholder="Soyadınız" />
-                <label asp-for="Input.LastName">Soyad</label>
-                <span asp-validation-for="Input.LastName" class="text-danger"></span>
-            </div>
+                <div class="card-body p-4 p-md-5 bg-white">
+                    <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
 
-            <div class="form-floating mb-3">
-                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Telefon (5XX...)" />
-                <label asp-for="Input.PhoneNumber">Telefon Numarası</label>
-                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3 small"></div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Input.FirstName" class="form-control rounded-pill" placeholder="Adınız" />
+                                    <label asp-for="Input.FirstName" class="ps-4">Ad</label>
+                                    <span asp-validation-for="Input.FirstName" class="text-danger ms-3 small"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input asp-for="Input.LastName" class="form-control rounded-pill" placeholder="Soyadınız" />
+                                    <label asp-for="Input.LastName" class="ps-4">Soyad</label>
+                                    <span asp-validation-for="Input.LastName" class="text-danger ms-3 small"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Input.PhoneNumber" class="form-control rounded-pill" placeholder="(5XX) XXX XX XX" />
+                            <label asp-for="Input.PhoneNumber" class="ps-4">Telefon Numarası</label>
+                            <span asp-validation-for="Input.PhoneNumber" class="text-danger ms-3 small"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Input.Email" class="form-control rounded-pill" placeholder="name@example.com" />
+                            <label asp-for="Input.Email" class="ps-4">Email Adresi</label>
+                            <span asp-validation-for="Input.Email" class="text-danger ms-3 small"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Input.Password" class="form-control rounded-pill" placeholder="Şifre" />
+                            <label asp-for="Input.Password" class="ps-4">Şifre</label>
+                            <span asp-validation-for="Input.Password" class="text-danger ms-3 small"></span>
+                        </div>
+
+                        <div class="form-floating mb-4">
+                            <input asp-for="Input.ConfirmPassword" class="form-control rounded-pill" placeholder="Şifre Tekrar" />
+                            <label asp-for="Input.ConfirmPassword" class="ps-4">Şifre (Tekrar)</label>
+                            <span asp-validation-for="Input.ConfirmPassword" class="text-danger ms-3 small"></span>
+                        </div>
+
+                        <div class="d-grid mb-3">
+                            <button id="registerSubmit" type="submit" class="btn btn-danger btn-lg text-white rounded-pill shadow-sm fw-bold" style="background: linear-gradient(135deg, #fd7e14, #dc3545); border:none;">
+                                Kayıt Ol
+                            </button>
+                        </div>
+
+                        <div class="text-center">
+                            <span class="text-muted">Zaten üye misin?</span>
+                            <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="text-decoration-none fw-bold text-warning">Giriş Yap</a>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="isim@ornek.com" />
-                <label asp-for="Input.Email">E-Posta</label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            <div class="text-center mt-3">
+                <a href="/" class="text-muted text-decoration-none small"><i class="bi bi-arrow-left"></i> Ana Sayfaya Dön</a>
             </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Şifre" />
-                <label asp-for="Input.Password">Şifre</label>
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
-            </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="Şifre" />
-                <label asp-for="Input.ConfirmPassword">Şifreyi Onayla</label>
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
-            </div>
-            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Kayıt Ol</button>
-        </form>
+        </div>
     </div>
 </div>
 

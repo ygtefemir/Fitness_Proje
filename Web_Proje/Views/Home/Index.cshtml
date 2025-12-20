@@ -1,8 +1,47 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Ana Sayfa";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="home-section text-center">
+    <h1 class="display-3 fw-bold">FitLife'a Hoş Geldiniz</h1>
+    <p class="lead mb-4">Hayalindeki vücuda ulaşmak için en iyi antrenörler ve modern salonlar seni bekliyor.</p>
+    <div>
+        <a asp-controller="Appointments" asp-action="Create" class="btn btn-primary btn-lg px-4 me-2">
+            <i class="bi bi-calendar-check"></i> Hemen Randevu Al
+        </a>
+        <a asp-controller="Trainers" asp-action="Index" class="btn btn-outline-light btn-lg px-4">
+            <i class="bi bi-people"></i> Eğitmenleri İncele
+        </a>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm text-center p-4">
+            <div class="text-primary mb-3"><i class="bi bi-geo-alt-fill" style="font-size: 3rem;"></i></div>
+            <h4>Modern Salonlar</h4>
+            <p class="text-muted">Şehrin en iyi lokasyonlarında, tam donanımlı spor salonları.</p>
+            <a asp-controller="Gyms" asp-action="Index" class="btn btn-sm btn-outline-primary">Salonları Gör</a>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm text-center p-4">
+            <div class="text-success mb-3"><i class="bi bi-activity" style="font-size: 3rem;"></i></div>
+            <h4>Çeşitli Hizmetler</h4>
+            <p class="text-muted">Pilates'ten Crossfit'e, Yoga'dan Bodybuilding'e geniş hizmet yelpazesi.</p>
+            <a asp-controller="Services" asp-action="Index" class="btn btn-sm btn-outline-success">Hizmetleri Gör</a>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-0 shadow-sm text-center p-4 hover-card">
+            <div class="text-warning mb-3"><i class="bi bi-robot" style="font-size: 3rem;"></i></div>
+            <h4>Yapay Zeka Koç</h4>
+            <p class="text-muted">AI destekli asistanımız ile antrenman ve beslenme tavsiyeleri al.</p>
+
+            <button onclick="toggleChat()" class="btn btn-sm btn-outline-warning">
+                <i class="bi bi-chat-dots-fill"></i> Asistana Sor
+            </button>
+
+        </div>
+    </div>
 </div>

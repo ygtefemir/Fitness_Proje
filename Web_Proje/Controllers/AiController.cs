@@ -19,6 +19,7 @@ namespace Web_Proje.Controllers
         public class ChatRequest
         {
             public string Message { get; set; }
+            public string? ImageBase64 { get; set; }
             public string? Age { get; set; }
             public string? Height { get; set; }
             public string? Weight { get; set; }
@@ -28,81 +29,99 @@ namespace Web_Proje.Controllers
         [HttpPost]
         public async Task<IActionResult> Chat([FromBody] ChatRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Message))
+            if (request == null || (string.IsNullOrWhiteSpace(request.Message) && string.IsNullOrEmpty(request.ImageBase64)))
+                return BadRequest();
+
+            string finalReplyText = "";
+            string? generatedImage = null;
+            string imageStatusNote = "";
+
+            string msgLower = request.Message?.ToLower() ?? "";
+
+            
+            bool wantsImage = msgLower.Contains("çiz") || msgLower.Contains("oluştur") || msgLower.Contains("foto") || msgLower.Contains("hayal et");
+
+            if (wantsImage)
             {
-                return BadRequest("Mesaj boş olamaz.");
+                // Prompt Hazırla
+                string userDetails = $"Male, {request.Age} years old, {request.Height}cm height, {request.Weight}kg weight.";
+                string promptInstruction = $"Create a detailed English image prompt for: '{request.Message}'. Include these physical traits: {userDetails}. Start with 'A photorealistic shot of...'. Output ONLY the prompt.";
+
+                string englishPrompt = await _aiService.ChatAsync(promptInstruction, request.ImageBase64);
+
+                // Resmi Çiz 
+                string result = await _aiService.GenerateImageAsync(englishPrompt);
+
+                if (!string.IsNullOrEmpty(result) && !result.StartsWith("ERROR"))
+                {
+                    generatedImage = $"data:image/jpeg;base64,{result}";
+                    imageStatusNote = "(SİSTEM NOTU: İstenen görsel oluşturuldu. Cevabında görselden bahset.)";
+                }
+                else
+                {
+                    imageStatusNote = $"(SİSTEM NOTU: Görsel oluşturulamadı. Hata: {result})";
+                }
             }
 
-            //  Salon Verilerini Çek
-            var services = await _context.Services.ToListAsync();
-            var trainers = await _context.Trainers
-                .Include(t => t.TrainerServices)
-                .ThenInclude(ts => ts.service)
-                .ToListAsync();
+            
 
-            string serviceList = string.Join("\n", services.Select(s => $"- {s.Name} ({s.DurationMin} dk - {s.Price} TL)"));
-            string trainerList = string.Join("\n", trainers.Select(t =>
+            // Hizmetleri Çek
+            string serviceList = "Genel Fitness";
+            if (_context.Services != null)
             {
-                var tServices = string.Join(", ", t.TrainerServices.Select(ts => ts.service.Name));
-                return $"- {t.Name} (Uzmanlık: {t.Specialty}, Verdiği Dersler: {tServices})";
-            }));
-
-            // kullanıcı profili oluştur
-            string userContext = "";
-            if (!string.IsNullOrEmpty(request.Weight) && !string.IsNullOrEmpty(request.Height))
-            {
-                userContext = $@"
-                    [KULLANICI PROFİLİ]
-                    - Yaş: {request.Age}
-                    - Boy: {request.Height} cm
-                    - Kilo: {request.Weight} kg
-                    - Hedef: {request.Goal ?? "Belirtilmedi"}
-                    * Lütfen cevaplarını bu profile göre özelleştir. (Örn: Kilo vermek istiyorsa kardiyo ağırlıklı konuş).
-                ";
-            }
-            else
-            {
-                userContext = "[KULLANICI PROFİLİ] Bilinmiyor. Genel cevaplar ver.";
+                var services = await _context.Services.ToListAsync();
+                serviceList = string.Join(", ", services.Select(s => s.Name));
             }
 
-            // prompt
-            string prompt = $@"
-                Sen 'FitLife Spor Salonu'nun profesyonel ve samimi yapay zeka koçusun.
+            
+            //Eğitmenleri Çek 
+            string trainerList = "Bilgi yok";
+
+            if (_context.Trainers != null)
+            {
+                
+                var trainers = await _context.Trainers
+                                             .Include(t => t.TrainerServices)       
+                                             .ThenInclude(ts => ts.service)        
+                                             .ToListAsync();
+
+               
+                
+                trainerList = string.Join("; ", trainers.Select(t =>
+                {
+                    // Hocanın verdiği tüm hizmetlerin isimlerini virgülle birleştir
+                    var skills = t.TrainerServices != null && t.TrainerServices.Any()
+                                 ? string.Join(", ", t.TrainerServices.Select(ts => ts.service?.Name))
+                                 : "Genel";
+
+                    return $"{t.Name} (Uzmanlıklar: {skills})";
+                }));
+            }
+
+            // SOHBET PROMPTU
+            string systemPrompt = $@"
+                Sen FitLife Spor Salonu'nun yapay zeka koçusun.
+                
+                SALON BİLGİLERİ:
+                - Hizmetler: {serviceList}
+                - Eğitmenler (Hocalar): {trainerList}
+                
+                KULLANICI: {request.Age} yaş, {request.Height}cm, {request.Weight}kg, Hedef: {request.Goal}.
+                MESAJ: ""{request.Message}""
+                
+                {imageStatusNote}
                 
                 GÖREVLERİN:
-                1. Salonumuzdaki hizmetleri ve hocaları pazarlamak.
-                2. Kullanıcıya diyeti ve antrenmanı konusunda tavsiye vermek.
-                3. Görsel Üretim Talebi Gelirse: Resim çizemezsin ama BETİMLEME yapabilirsin. 
-                   Kullanıcı 'Zayıflayınca nasıl görünürüm?' derse, onu motive edecek şekilde zihinsel bir resim çiz (Örn: '3 ay sonra bel çevren incelmiş, duruşun dikleşmiş olacak...').
-
-                SALON VERİLERİ:
-                Hizmetler:
-                {serviceList}
-
-                Eğitmenler:
-                {trainerList}
-
-                {userContext}
-
-                KULLANICI MESAJI: ""{request.Message}""
-                
-                Cevabın kısa, net ve motive edici olsun. Emoji kullan.
+                1. Kullanıcıya detaylı bir antrenman/beslenme planı veya cevabı ver.
+                2. Eğer kullanıcı belirli bir hizmetle (örn: Pilates, Kick Boks) ilgileniyorsa, EĞİTMENLER listesinden o işin uzmanı olan hocayı mutlaka öner (Örn: 'Bu konuda Ahmet Hoca ile çalışabilirsin').
+                3. Motive edici ol.
             ";
 
-            try
-            {
-                string answer = await _aiService.GetAnswerAsync(prompt);
-                return Json(new { reply = answer });
-            }
-            catch
-            {
-                return Json(new { reply = "Şu an bağlantıda bir sorun var, ama pes etmek yok! Tekrar dene. 🤖" });
-            }
+            finalReplyText = await _aiService.ChatAsync(systemPrompt, request.ImageBase64);
+
+            return Json(new { reply = finalReplyText, generatedImageUrl = generatedImage });
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
+        public IActionResult Index() => View();
     }
 }

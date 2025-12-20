@@ -4,7 +4,7 @@
         position: fixed;
         bottom: 30px;
         right: 30px;
-        background: #0d6efd;
+        background: #fd7e14; 
         width: 60px;
         height: 60px;
         border-radius: 50%;
@@ -23,15 +23,15 @@
             transform: scale(1.1);
         }
 
-    /* Ana Pencere */
     .chat-box {
         display: none;
         position: fixed;
         bottom: 100px;
         right: 30px;
-        width: 380px; 
+        width: 500px;
+        height: 700px;
         max-width: 90%;
-        height: 550px; 
+        max-height: 85vh;
         background: white;
         border-radius: 15px;
         box-shadow: 0px 5px 20px rgba(0,0,0,0.2);
@@ -41,8 +41,9 @@
         border: 1px solid #ddd;
     }
 
+
     .chat-box-header {
-        background: #0d6efd;
+        background: linear-gradient(135deg, #fd7e14, #ffc107); /* Turuncu Gradyan */
         color: white;
         padding: 15px;
         font-weight: bold;
@@ -55,7 +56,7 @@
         flex: 1;
         padding: 15px;
         overflow-y: auto;
-        background: #f8f9fa;
+        background: #fff8f0; /* Açık Krem */
         display: flex;
         flex-direction: column;
         gap: 10px;
@@ -70,21 +71,23 @@
     }
 
     .chat-msg-user {
-        background: #0d6efd;
+        background: #fd7e14;
         color: white;
         align-self: flex-end;
         border-bottom-right-radius: 2px;
     }
 
     .chat-msg-ai {
-        background: #e9ecef;
+        background: white;
+        border: 1px solid #dee2e6;
         color: #333;
         align-self: flex-start;
         border-bottom-left-radius: 2px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
 
     .user-stats-panel {
-        background: #f1f3f5;
+        background: #fff;
         padding: 10px;
         border-top: 1px solid #dee2e6;
         font-size: 0.85rem;
@@ -95,7 +98,22 @@
         background: white;
         border-top: 1px solid #ddd;
         display: flex;
+        align-items: center;
         gap: 5px;
+    }
+
+    #image-preview-area {
+        display: none;
+        padding: 5px 10px;
+        background: #f1f3f5;
+        border-top: 1px solid #ddd;
+        text-align: right;
+    }
+
+    #preview-img {
+        height: 50px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
     }
 </style>
 
@@ -106,19 +124,23 @@
 <div class="chat-box" id="chat-box">
     <div class="chat-box-header">
         <span><i class="bi bi-robot"></i> FitLife Koç</span>
-        <span style="cursor:pointer;" onclick="toggleChat()">✖</span>
+        <div>
+            <i class="bi bi-trash3-fill me-3" style="cursor:pointer;" onclick="confirmClearHistory()" title="Sohbeti ve Verileri Sıfırla"></i>
+
+            <span style="cursor:pointer;" onclick="toggleChat()">✖</span>
+        </div>
     </div>
 
     <div class="chat-box-body" id="chat-logs">
         <div class="chat-msg chat-msg-ai">
-            Merhaba! Ben kişisel yapay zeka antrenörün. 💪<br>
-            Sana özel program hazırlamam için aşağıdan bilgilerini girebilirsin.
+            Merhaba! Ben yeni nesil yapay zeka koçun. 🚀<br>
+            Fotoğrafını atarsan analiz edebilirim veya 'beni çiz' dersen hayalindeki formu çizebilirim!
         </div>
     </div>
 
     <div class="user-stats-panel">
         <div class="d-flex justify-content-between mb-1">
-            <strong>Kişisel Bilgilerin:</strong>
+            <strong>Profilin:</strong>
             <small class="text-primary" style="cursor:pointer" onclick="$('#statsForm').slideToggle()">Gizle/Göster</small>
         </div>
         <div id="statsForm" class="row g-2">
@@ -142,17 +164,50 @@
         </div>
     </div>
 
+    <div id="image-preview-area">
+        <span class="small text-muted me-2">Gönderilecek Foto:</span>
+        <img id="preview-img" src="" alt="Önizleme" />
+        <button class="btn btn-sm btn-danger ms-2" onclick="clearImageSelection()">X</button>
+    </div>
+
     <div class="chat-box-footer">
-        <input type="text" id="chat-input" class="form-control" placeholder="Örn: Bana bir diyet yaz..." onkeypress="handleEnter(event)">
-        <button class="btn btn-primary" onclick="sendMessage()"><i class="bi bi-send-fill"></i></button>
+        <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleImageSelect(this)" />
+
+        <button class="btn btn-secondary" onclick="document.getElementById('imageInput').click()" title="Fotoğraf Ekle">
+            <i class="bi bi-camera-fill"></i>
+        </button>
+
+        <input type="text" id="chat-input" class="form-control" placeholder="Mesajınız..." onkeypress="handleEnter(event)">
+        <button class="btn btn-warning text-white" onclick="sendMessage()"><i class="bi bi-send-fill"></i></button>
     </div>
 </div>
 
 <script>
+    // Global değişkenler
+    let selectedBase64 = null;
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Sohbeti geri yükle
+        loadChatHistory();
+
+        // Profil bilgilerini geri yükle
+        loadUserProfile();
+
+        // Profil inputlarına "değişiklik izleyici" ekle
+        // Kullanıcı bir harf bile yazsa/değiştirse anında hafızaya kaydedilecek.
+        const inputIds = ["uAge", "uHeight", "uWeight", "uGoal"];
+        inputIds.forEach(id => {
+            document.getElementById(id).addEventListener("input", saveUserProfile);
+            document.getElementById(id).addEventListener("change", saveUserProfile); // Selectbox için
+        });
+    });
+
     function toggleChat() {
         var chatBox = document.getElementById("chat-box");
         if (chatBox.style.display === "none" || chatBox.style.display === "") {
             chatBox.style.display = "flex";
+            var logs = document.getElementById("chat-logs");
+            logs.scrollTop = logs.scrollHeight;
         } else {
             chatBox.style.display = "none";
         }
@@ -162,56 +217,91 @@
         if (e.key === "Enter") sendMessage();
     }
 
-    async function sendMessage() {
-        var input = document.getElementById("chat-input");
-        var msg = input.value.trim();
-
-        // Inputlardan verileri al
-        var age = document.getElementById("uAge").value;
-        var height = document.getElementById("uHeight").value;
-        var weight = document.getElementById("uWeight").value;
-        var goal = document.getElementById("uGoal").value;
-
-        if (msg === "") return;
-
-        // Ekrana bas
-        var logs = document.getElementById("chat-logs");
-        logs.innerHTML += `<div class="chat-msg chat-msg-user">${msg}</div>`;
-        input.value = "";
-        logs.scrollTop = logs.scrollHeight;
-
-        // Yükleniyor efekti
-        var loadingId = "loading-" + Date.now();
-        logs.innerHTML += `<div id="${loadingId}" class="chat-msg chat-msg-ai"><i><span class="spinner-grow spinner-grow-sm"></span> Düşünüyorum...</i></div>`;
-        logs.scrollTop = logs.scrollHeight;
-
-        try {
-            // Backend'e tüm veriyi gönder
-            let response = await fetch('/AI/Chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    message: msg,
-                    age: age,
-                    height: height,
-                    weight: weight,
-                    goal: goal
-                })
-            });
-
-            if (!response.ok) throw new Error("Hata");
-
-            let data = await response.json();
-            document.getElementById(loadingId).remove();
-
-            // Cevabı Markdown benzeri formattan HTML'e 
-            let formattedReply = data.reply.replace(/\n/g, "<br>");
-            logs.innerHTML += `<div class="chat-msg chat-msg-ai">${formattedReply}</div>`;
-
-        } catch (err) {
-            document.getElementById(loadingId).remove();
-            logs.innerHTML += `<div class="chat-msg chat-msg-ai text-danger">Bağlantı hatası.</div>`;
+    function handleImageSelect(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('preview-img').src = e.target.result;
+                document.getElementById('image-preview-area').style.display = 'block';
+                selectedBase64 = e.target.result.split(',')[1];
+            };
+            reader.readAsDataURL(input.files[0]);
         }
-        logs.scrollTop = logs.scrollHeight;
+    }
+
+    function clearImageSelection() {
+        document.getElementById('imageInput').value = "";
+        selectedBase64 = null;
+        document.getElementById('image-preview-area').style.display = 'none';
+    }
+
+    
+
+    // Sohbeti Kaydet
+    function saveChatHistory() {
+        var logs = document.getElementById("chat-logs");
+        localStorage.setItem("fitLifeChatHistory", logs.innerHTML);
+    }
+
+    // Profili Kaydet 
+    function saveUserProfile() {
+        var profileData = {
+            age: document.getElementById("uAge").value,
+            height: document.getElementById("uHeight").value,
+            weight: document.getElementById("uWeight").value,
+            goal: document.getElementById("uGoal").value
+        };
+        localStorage.setItem("fitLifeUserProfile", JSON.stringify(profileData));
+    }
+
+   
+
+    // Sohbeti Yükle
+    function loadChatHistory() {
+        var history = localStorage.getItem("fitLifeChatHistory");
+        if (history) {
+            var logs = document.getElementById("chat-logs");
+            logs.innerHTML = history;
+            logs.scrollTop = logs.scrollHeight;
+        }
+    }
+
+    // Profili Yükle 
+    function loadUserProfile() {
+        var savedProfile = localStorage.getItem("fitLifeUserProfile");
+        if (savedProfile) {
+            var profileData = JSON.parse(savedProfile);
+            if (profileData) {
+                document.getElementById("uAge").value = profileData.age || "";
+                document.getElementById("uHeight").value = profileData.height || "";
+                document.getElementById("uWeight").value = profileData.weight || "";
+                document.getElementById("uGoal").value = profileData.goal || "";
+            }
+        }
+    }
+
+   
+    function confirmClearHistory() {
+        if (confirm("Tüm sohbet geçmişin ve profil bilgilerin silinecek. Emin misin?")) {
+            // LocalStorage'ı Temizle
+            localStorage.removeItem("fitLifeChatHistory");
+            localStorage.removeItem("fitLifeUserProfile");
+
+            // Sohbet Ekranını Sıfırla
+            document.getElementById("chat-logs").innerHTML = `
+                <div class="chat-msg chat-msg-ai">
+                    Merhaba! Ben yeni nesil yapay zeka koçun. 🚀<br>
+                    Fotoğrafını atarsan analiz edebilirim veya 'beni çiz' dersen hayalindeki formu çizebilirim!
+                </div>`;
+
+            // Profil Inputlarını Sıfırla
+            document.getElementById("uAge").value = "";
+            document.getElementById("uHeight").value = "";
+            document.getElementById("uWeight").value = "";
+            document.getElementById("uGoal").value = "";
+
+            // Seçili Resim Varsa Kaldır
+            clearImageSelection();
+        }
     }
 </script>
