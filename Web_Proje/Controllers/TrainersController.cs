@@ -54,6 +54,8 @@ namespace Web_Proje.Controllers
 
             return View(trainer);
         }
+        
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             //Frontend listeleme için
@@ -65,6 +67,7 @@ namespace Web_Proje.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create(TrainerApiDto model, int[] ServiceIds)
         {
             ModelState.Remove("GymName");
@@ -120,6 +123,8 @@ namespace Web_Proje.Controllers
             //tekrar model gönder (yazılar silinmesin)
             return View(model);
         }
+
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -150,6 +155,7 @@ namespace Web_Proje.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id, TrainerApiDto model, int[] ServiceIds)
         {
             if (id != model.Id) return NotFound();
@@ -225,21 +231,32 @@ namespace Web_Proje.Controllers
             return _context.Trainers.Any(e => e.Id == id);
         }
 
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
 
             var trainer = await _context.Trainers
-                .Include(t => t.Gym)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            .Include(t => t.Gym) // İlişkili verileri de çekelim ki ekranda boş görünmesin
+            .FirstOrDefaultAsync(m => m.Id == id);
 
             if (trainer == null) return NotFound();
 
-            return View(trainer);
+            var trainerDto = new TrainerApiDto
+            {
+                Id = trainer.Id,
+                Name = trainer.Name,
+                Specialty = trainer.Specialty,
+                GymId = trainer.GymId, // Eğer DTO'da GymName varsa onu da eşleştirebilirsin
+                                       // DTO'nda olan diğer alanları buraya ekle
+            };
+
+            return View(trainerDto);
         }
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var trainer = await _context.Trainers.FindAsync(id);

@@ -58,7 +58,7 @@ namespace Web_Proje.Areas.Identity.Pages.Account.Manage
             [Display(Name = "Soyİsim")]
             public string LastName { get; set; }
 
-            [Phone]
+            [Phone(ErrorMessage = "{0} alanı uygun formatta değil")]
             [Display(Name = "Phone number")]
             public string PhoneNumber { get; set; }
         }
@@ -134,13 +134,13 @@ namespace Web_Proje.Areas.Identity.Pages.Account.Manage
                 var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
                 if (!setPhoneResult.Succeeded)
                 {
-                    StatusMessage = "Unexpected error when trying to set phone number.";
+                    StatusMessage = "Numara ayarlanırken hata";
                     return RedirectToPage();
                 }
             }
 
             await _signInManager.RefreshSignInAsync(user);
-            StatusMessage = "Your profile has been updated";
+            StatusMessage = "Profilin güncellendi";
             return RedirectToPage();
         }
     }

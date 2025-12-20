@@ -22,7 +22,7 @@ namespace Web_Proje.Models
         [Display(Name = "Ücret (₺)")] // Para birimi formatı
         public decimal Price { get; set; }
 
-        public ICollection<TrainerService> TrainerServices { get; set; }
+        public ICollection<TrainerService>? TrainerServices { get; set; }
 
         public ICollection<Appointment>? Appointments { get; set; }
     }

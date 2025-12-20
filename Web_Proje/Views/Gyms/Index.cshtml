@@ -27,6 +27,34 @@
                         <p class="card-text text-muted">
                             <i class="bi bi-geo-alt-fill text-danger"></i> @item.Address
                         </p>
+                        <p class="card-text text-muted">
+                            <i class="bi bi-geo-alt-fill text-danger"></i> @item.Address
+                        </p>
+
+                        <div class="mb-3">
+                            @{
+                                // Salonun hocaları -> Hocaların hizmetleri -> Hizmet isimleri -> Tekrar edenleri sil
+                                var services = item.Trainers?
+                                .SelectMany(t => t.TrainerServices)
+                                .Select(ts => ts.service.Name)
+                                .Distinct()
+                                .ToList();
+                            }
+
+                            @if (services != null && services.Any())
+                            {
+                                // Varsa listele (Badge stili)
+                                foreach (var s in services)
+                                {
+                                    <span class="badge bg-light text-primary border border-primary mb-1">@s</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-secondary border">Hizmet bilgisi yok</span>
+                            }
+                        </div>
+                        <hr />
                         <hr />
                         <div class="d-flex justify-content-between align-items-center">
                             <small class="text-secondary">

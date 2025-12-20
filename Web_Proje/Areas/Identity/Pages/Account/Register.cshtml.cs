@@ -76,11 +76,11 @@ namespace Web_Proje.Areas.Identity.Pages.Account
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
             /// 
-            [Required]
+            [Required(ErrorMessage = "{0} alanı zorunludur")]
             [Display(Name = "Ad")]
             public string FirstName { get; set; }
 
-            [Required]
+            [Required(ErrorMessage = "{0} alanı zorunludur")]
             [Display(Name = "Soyad")]
             public string LastName { get; set; }
 
@@ -109,8 +109,8 @@ namespace Web_Proje.Areas.Identity.Pages.Account
             [Compare("Password", ErrorMessage = "Şifreler uyuşmuyor.")]
             public string ConfirmPassword { get; set; }
 
-            [Required]
-            [Phone]
+            [Required(ErrorMessage = "{0} alanı zorunludur")]
+            [Phone(ErrorMessage = "{0} alanı uygun formatta değil")]
             [Display(Name = "Telefon Numarası")]
             public string PhoneNumber { get; set; }
         }
