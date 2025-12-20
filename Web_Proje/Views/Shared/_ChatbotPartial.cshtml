@@ -217,6 +217,94 @@
         if (e.key === "Enter") sendMessage();
     }
 
+    async function sendMessage() {
+        var input = document.getElementById("chat-input");
+        var logs = document.getElementById("chat-logs");
+        var msg = input.value.trim();
+
+        // Mesaj boşsa ve resim seçilmemişse çık
+        if (!msg && !selectedBase64) return;
+
+        // KULLANICI MESAJINI EKRANA BAS
+        var userHtml = `
+            <div class="chat-msg chat-msg-user">
+                ${msg}
+                ${selectedBase64 ? `<br><img src="data:image/png;base64,${selectedBase64}" style="max-height:150px; border-radius:10px; margin-top:5px; border:2px solid white;">` : ''}
+            </div>`;
+
+        logs.innerHTML += userHtml;
+        logs.scrollTop = logs.scrollHeight;
+
+        // Inputları temizle
+        input.value = "";
+
+        //YAZIYOR EFEKTİ
+        var loadingId = "loading-" + Date.now();
+        logs.innerHTML += `
+            <div id="${loadingId}" class="chat-msg chat-msg-ai text-muted fst-italic">
+                <i class="bi bi-three-dots"></i> Yazıyor...
+            </div>`;
+        logs.scrollTop = logs.scrollHeight;
+
+        try {
+            // LocalStorage'dan profil bilgilerini al
+            var profile = JSON.parse(localStorage.getItem("fitLifeUserProfile")) || {};
+
+            
+            var requestData = {
+                Message: msg,
+                Age: profile.age || "Bilinmiyor",
+                Height: profile.height || "Bilinmiyor",
+                Weight: profile.weight || "Bilinmiyor",
+                Goal: profile.goal || "Bilinmiyor",
+                ImageBase64: selectedBase64 || null // Resim seçiliyse gönder
+            };
+
+            //API'YE JSON OLARAK GÖNDER
+            const response = await fetch('/Ai/Chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json' // Controller [FromBody] beklediği için JSON diyoruz
+                },
+                body: JSON.stringify(requestData)
+            });
+
+            if (!response.ok) throw new Error("API Hatası: " + response.status);
+
+            const data = await response.json();
+
+            // Yükleniyor'u kaldır
+            document.getElementById(loadingId).remove();
+
+            // Resim temizleme
+            if(selectedBase64) clearImageSelection();
+
+            let aiResponseHtml = formatText(data.reply);
+            if (data.generatedImageUrl) {
+                aiResponseHtml += `<br><img src="${data.generatedImageUrl}" class="mt-3 rounded shadow-sm border" style="max-width: 100%; border-radius: 10px;">`;
+            }
+
+            logs.innerHTML += `
+                <div class="chat-msg chat-msg-ai">
+                    ${aiResponseHtml}
+                </div>`;
+
+            saveChatHistory();
+
+        } catch (error) {
+            var loadingEl = document.getElementById(loadingId);
+            if(loadingEl) loadingEl.remove();
+
+            logs.innerHTML += `
+                <div class="chat-msg chat-msg-ai text-danger">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Hata oluştu. Lütfen tekrar dene.
+                </div>`;
+            console.error(error);
+        }
+
+        logs.scrollTop = logs.scrollHeight;
+    }
+
     function handleImageSelect(input) {
         if (input.files && input.files[0]) {
             var reader = new FileReader();
@@ -303,5 +391,28 @@
             // Seçili Resim Varsa Kaldır
             clearImageSelection();
         }
+
+    }
+
+    function formatText(text) {
+        if (!text) return "";
+
+        // HTML Karakterlerini Temizle (Güvenlik)
+        let safeText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+        // Kalın Yazıları (**Yazı**) -> <strong>Yazı</strong> yap
+        safeText = safeText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        // Başlıkları (### Başlık) -> <h5>Başlık</h5> yap
+        safeText = safeText.replace(/### (.*?)\n/g, '<h6 class="fw-bold mt-2 text-primary">$1</h6>');
+
+        // Madde İşaretlerini (* Madde) -> • Madde yap ve alt satıra al
+        safeText = safeText.replace(/^\* /gm, '<br>• ');
+        safeText = safeText.replace(/^- /gm, '<br>• ');
+
+        // Yeni Satırları (\n) -> <br> yap
+        safeText = safeText.replace(/\n/g, '<br>');
+
+        return safeText;
     }
 </script>
